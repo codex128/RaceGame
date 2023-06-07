@@ -1,5 +1,7 @@
 # RaceGame
-Physics based racing game built with JMonkeyEngine3.
+Multiplayer physics-based racing game built with JMonkeyEngine3.
+
+![racing](https://github.com/codex128/RaceGame/blob/master/assets/Textures/RaceGame1.png)
 
 # Controls
 **Red**: Arrow keys and left control.<br>
