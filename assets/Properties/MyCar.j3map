@@ -1,0 +1,14 @@
+model: "Models/ferrari/Car.j3o";
+scale: .5f;
+mass: 400f;
+wheels: {
+    fr: "WheelFrontRight";
+    fl: "WheelFrontLeft";
+    br: "WheelBackRight";
+    bl: "WheelBackLeft";
+}
+suspension: {
+    stiffness: 70f;
+    compression: 0.5f;
+    damping: 0.6f;
+}
