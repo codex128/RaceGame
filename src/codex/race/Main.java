@@ -15,13 +15,19 @@ import com.jme3.input.KeyInput;
 import com.jme3.light.DirectionalLight;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Transform;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
+import com.simsilica.lemur.Container;
 import com.simsilica.lemur.GuiGlobals;
-import com.simsilica.lemur.input.InputMapper;
+import com.simsilica.lemur.HAlignment;
+import com.simsilica.lemur.Label;
+import com.simsilica.lemur.VAlignment;
+import com.simsilica.lemur.component.DynamicInsetsComponent;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -30,14 +36,16 @@ import java.util.Iterator;
  * Move your Logic into AppStates or Controls
  * @author normenhansen
  */
-public class Main extends SimpleApplication {
-
+public class Main extends SimpleApplication implements DriverListener {
+	
 	BulletAppState bulletapp;
 	Driver[] drivers;
 	Spatial track;
 	final int numPlayers = 4;
-	final int numLaps = 5;
+	final int numLaps = 1;
 	ArrayList<LapTrigger> triggers = new ArrayList<>();
+	int driversFinished = 0;
+	Vector2f windowSize;
 	
 	public Main() {
 		super((AppState) null);
@@ -53,10 +61,11 @@ public class Main extends SimpleApplication {
         
 		GuiGlobals.initialize(this);
 		GuiGlobals.getInstance().setCursorEventsEnabled(false);
-		InputMapper im = GuiGlobals.getInstance().getInputMapper();
 		
 		assetManager.registerLoader(J3mapFactory.class, "j3map");
 		J3mapFactory.registerAllProcessors(FloatProcessor.class, StringProcessor.class);
+		
+		windowSize = new Vector2f(context.getSettings().getWidth(), context.getSettings().getHeight());
 		
 		bulletapp = new BulletAppState();
 		//bulletapp.setDebugEnabled(true);
@@ -122,6 +131,7 @@ public class Main extends SimpleApplication {
 			t.set(s.next());
 			drivers[i].getVehicle().setPhysicsLocation(t.getTranslation());
 			drivers[i].getVehicle().setPhysicsRotation(t.getRotation());
+			drivers[i].addListener(this);
 		}
 		
     }
@@ -142,13 +152,30 @@ public class Main extends SimpleApplication {
 		}
 	}
     @Override
-    public void simpleRender(RenderManager rm) {}
+    public void simpleRender(RenderManager rm) {
+		for (Driver d : drivers) {
+			d.render(rm);
+		}
+	}
+	@Override
+	public void onDriverFinish(Driver driver) {
+		driversFinished++;
+		System.out.println("driver finished!");
+		Label l = new Label(driversFinished+"st");
+		driver.getGui().attachChild(l);
+		l.setFontSize(50f);
+		l.setColor(ColorRGBA.White);
+		l.setTextHAlignment(HAlignment.Center);
+		l.setTextVAlignment(VAlignment.Center);
+		l.setLocalTranslation(windowSize.x/2f, windowSize.y/2f, 0f);
+	}
 	
 	private Driver createP1(J3map carData, String id, int n) {
 		Driver d = new Driver(id);
 		VehicleControl v = d.createVehicle(assetManager, carData);
 		v.getSpatial().setMaterial(assetManager.loadMaterial("Materials/red_car_material.j3m"));
 		d.setCamera(cam);
+		//d.setAccelForce(2000f);
 		d.setViewSize(getViewSize(0, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
 				KeyInput.KEY_UP, KeyInput.KEY_DOWN, KeyInput.KEY_RCONTROL, KeyInput.KEY_RIGHT, KeyInput.KEY_LEFT);
@@ -201,7 +228,7 @@ public class Main extends SimpleApplication {
 		return bulletapp.getPhysicsSpace();
 	}
 
-	private int wrap(int n, int min, int max) {
+	private static int wrap(int n, int min, int max) {
 		if (n > max) return min+(n-max-1);
 		else if (n < min) return max-(min-n-1);
 		else return n;

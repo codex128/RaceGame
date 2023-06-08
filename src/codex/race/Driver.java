@@ -5,6 +5,7 @@
 package codex.race;
 
 import codex.j3map.J3map;
+import codex.jmeutil.listen.Listenable;
 import codex.jmeutil.scene.SceneGraphIterator;
 import com.jme3.asset.AssetManager;
 import com.jme3.bounding.BoundingBox;
@@ -16,37 +17,46 @@ import com.jme3.collision.CollisionResults;
 import com.jme3.math.FastMath;
 import com.jme3.math.Plane;
 import com.jme3.math.Ray;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
+import com.simsilica.lemur.Container;
 import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
 import com.simsilica.lemur.input.StateFunctionListener;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  *
  * @author gary
  */
-public class Driver implements StateFunctionListener {
+public class Driver implements StateFunctionListener, Listenable<DriverListener> {
 	
 	private static final Plane VIEW_PLANE = new Plane(Vector3f.UNIT_Y, Vector3f.ZERO);
 	
 	String id;
 	VehicleControl car;
 	Camera cam;
+	Node gui;
+	ViewPort guiView;
+	Vector4f viewSize;
 	FunctionId gas, flip, steer;
-	float accelForce = 2500f;
+	float accelForce = 10000f;
 	float steerAngle = .5f;
 	int nextTrigger = 0;
 	int lap = 0;
 	boolean finished = false;
 	float camHeight = 10f;
+	LinkedList<DriverListener> listeners = new LinkedList<>();
 	
 	public Driver(String id) {
 		this.id = id;
@@ -126,13 +136,17 @@ public class Driver implements StateFunctionListener {
 		return vp;
 	}
 	public void setViewSize(Vector4f size) {
+		viewSize = size;
 		cam.setViewPort(size.x, size.y, size.z, size.w);
-	}	
+	}
 	public void setCar(VehicleControl car) {
 		this.car = car;
 	}
 	public void setCamera(Camera cam) {
 		this.cam = cam;
+	}
+	public void setAccelForce(float accel) {
+		accelForce = accel;
 	}
 	
 	public void update(float tpf) {
@@ -141,7 +155,10 @@ public class Driver implements StateFunctionListener {
 		Vector3f pos = car.getPhysicsLocation().add(planar.multLocal(30f)).addLocal(0f, camHeight, 0f);
 		cam.setLocation(cam.getLocation().add(pos.subtractLocal(cam.getLocation()).divideLocal(10f)));
 		cam.lookAt(car.getPhysicsLocation(), Vector3f.UNIT_Y);
-		
+		gui.updateLogicalState(tpf);
+	}
+	public void render(RenderManager rm) {
+		gui.updateGeometricState();
 	}
 	public boolean detectLapTriggers(ArrayList<LapTrigger> triggers, int laps) {
 		if (finished) return false;
@@ -155,6 +172,7 @@ public class Driver implements StateFunctionListener {
 				car.steer(0f);
 				lap = laps;
 				finished = true;
+				notifyListeners(l -> l.onDriverFinish(this));
 			}
 			if (++nextTrigger >= triggers.size()) {
 				nextTrigger = 0;
@@ -185,6 +203,12 @@ public class Driver implements StateFunctionListener {
 	public Camera getCamera() {
 		return cam;
 	}
+	public Node getGui() {
+		return gui;
+	}
+	public Vector4f getViewSize() {
+		return viewSize;
+	}
 	public int getNextTriggerIndex() {
 		return nextTrigger;
 	}
@@ -193,6 +217,10 @@ public class Driver implements StateFunctionListener {
 	}
 	public boolean isFinished() {
 		return finished;
+	}
+	@Override
+	public Collection<DriverListener> getListeners() {
+		return listeners;
 	}
 	
 	public void initializeInputs(InputMapper im, int drive, int reverse, int flip, int right, int left) {
@@ -252,7 +280,6 @@ public class Driver implements StateFunctionListener {
 			}
 		}
 		return null;
-	}
-	
+	}	
 	
 }
