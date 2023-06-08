@@ -14,19 +14,20 @@ import com.jme3.bullet.control.VehicleControl;
 import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
+import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Plane;
 import com.jme3.math.Ray;
-import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
+import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.simsilica.lemur.Container;
+import com.simsilica.lemur.Label;
 import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
@@ -45,9 +46,9 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 	
 	String id;
 	VehicleControl car;
-	Camera cam;
+	Camera gameCam;
+	Camera guiCam;
 	Node gui;
-	ViewPort guiView;
 	Vector4f viewSize;
 	FunctionId gas, flip, steer;
 	float accelForce = 10000f;
@@ -129,37 +130,53 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 		
 		return car;
 	}
-	public ViewPort createPersonalViewPort(RenderManager rm, Camera base) {
-		cam = base.clone();
-		ViewPort vp = rm.createMainView(id+"-view", cam);
+	public ViewPort createGameViewPort(RenderManager rm, Camera base) {
+		gameCam = base.clone();
+		ViewPort vp = rm.createMainView(id+"-view", gameCam);
 		vp.setClearFlags(true, true, true);
+		return vp;
+	}
+	public ViewPort createGuiViewPort(RenderManager rm, Camera base) {
+		guiCam = base.clone();
+		gui = new Node(id+"-gui");
+		gui.setQueueBucket(RenderQueue.Bucket.Gui);
+		ViewPort vp = rm.createPostView(id+"-gui-view", guiCam);
+		vp.setBackgroundColor(ColorRGBA.randomColor());
+		vp.setClearColor(true);
+		vp.attachScene(gui);
+		Label l = new Label("Hello World");
+		gui.attachChild(l);
+		l.setLocalTranslation(300, 300, 0);
+		l.setFontSize(50f);
 		return vp;
 	}
 	public void setViewSize(Vector4f size) {
 		viewSize = size;
-		cam.setViewPort(size.x, size.y, size.z, size.w);
+		gameCam.setViewPort(size.x, size.y, size.z, size.w);
+		guiCam.setViewPort(size.x, size.y, size.z, size.w);
 	}
 	public void setCar(VehicleControl car) {
 		this.car = car;
 	}
 	public void setCamera(Camera cam) {
-		this.cam = cam;
+		this.gameCam = cam;
 	}
 	public void setAccelForce(float accel) {
 		accelForce = accel;
 	}
 	
-	public void update(float tpf) {
-		if (car == null || cam == null) return;
+	public void update(float tpf) {		
+		if (car == null || gameCam == null) return;
 		Vector3f planar = VIEW_PLANE.getClosestPoint(car.getPhysicsRotation().getRotationColumn(2));
 		Vector3f pos = car.getPhysicsLocation().add(planar.multLocal(30f)).addLocal(0f, camHeight, 0f);
-		cam.setLocation(cam.getLocation().add(pos.subtractLocal(cam.getLocation()).divideLocal(10f)));
-		cam.lookAt(car.getPhysicsLocation(), Vector3f.UNIT_Y);
-		gui.updateLogicalState(tpf);
+		gameCam.setLocation(gameCam.getLocation().add(pos.subtractLocal(gameCam.getLocation()).divideLocal(10f)));
+		gameCam.lookAt(car.getPhysicsLocation(), Vector3f.UNIT_Y);
 	}
-	public void render(RenderManager rm) {
+	public void updateNodeStates(float tpf) {
+		gui.updateLogicalState(tpf);
 		gui.updateGeometricState();
 	}
+	
 	public boolean detectLapTriggers(ArrayList<LapTrigger> triggers, int laps) {
 		if (finished) return false;
 		Spatial spatial = triggers.get(nextTrigger).getSpatial();
@@ -183,12 +200,12 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 	}
 	public void minimizeCarOcclusion(Spatial track) {
 		Vector3f focus = car.getPhysicsLocation().add(0f, .5f, 0f);
-		Ray r = new Ray(cam.getLocation(), focus.subtract(cam.getLocation()).normalizeLocal());
+		Ray r = new Ray(gameCam.getLocation(), focus.subtract(gameCam.getLocation()).normalizeLocal());
 		CollisionResults res = new CollisionResults();
 		track.collideWith(r, res);
 		if (res.size() > 0) {
 			CollisionResult closest = res.getClosestCollision();
-			if (closest.getDistance() < cam.getLocation().distance(focus)) {
+			if (closest.getDistance() < gameCam.getLocation().distance(focus)) {
 				camHeight = Math.min(camHeight+1f, 30f);
 			}
 			else {
@@ -201,7 +218,7 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 		return car;
 	}
 	public Camera getCamera() {
-		return cam;
+		return gameCam;
 	}
 	public Node getGui() {
 		return gui;

@@ -110,8 +110,7 @@ public class Main extends SimpleApplication implements DriverListener {
 		rootNode.addLight(new DirectionalLight(new Vector3f(-1f, -1f, -1f), ColorRGBA.DarkGray));
 		
 		J3map carData = (J3map)assetManager.loadAsset("Properties/MyCar.j3map");
-		drivers = new Driver[numPlayers];
-		
+		drivers = new Driver[numPlayers];		
 		drivers[0] = createP1(carData, "p1", numPlayers);
 		if (numPlayers >= 2) {
 			drivers[1] = createP2(carData, "p2", numPlayers);
@@ -149,25 +148,23 @@ public class Main extends SimpleApplication implements DriverListener {
 				d.getVehicle().setLinearVelocity(Vector3f.ZERO);
 				d.getVehicle().setAngularVelocity(Vector3f.ZERO);
 			}
+			d.updateNodeStates(tpf);
 		}
 	}
     @Override
-    public void simpleRender(RenderManager rm) {
-		for (Driver d : drivers) {
-			d.render(rm);
-		}
-	}
+    public void simpleRender(RenderManager rm) {}
 	@Override
 	public void onDriverFinish(Driver driver) {
 		driversFinished++;
 		System.out.println("driver finished!");
-		Label l = new Label(driversFinished+"st");
+		Label l = new Label(driversFinished+getNumberSuffix(driversFinished));
 		driver.getGui().attachChild(l);
 		l.setFontSize(50f);
 		l.setColor(ColorRGBA.White);
-		l.setTextHAlignment(HAlignment.Center);
-		l.setTextVAlignment(VAlignment.Center);
+		//l.setTextHAlignment(HAlignment.Center);
+		//l.setTextVAlignment(VAlignment.Center);
 		l.setLocalTranslation(windowSize.x/2f, windowSize.y/2f, 0f);
+		//driver.getGui().updateGeometricState();
 	}
 	
 	private Driver createP1(J3map carData, String id, int n) {
@@ -176,6 +173,7 @@ public class Main extends SimpleApplication implements DriverListener {
 		v.getSpatial().setMaterial(assetManager.loadMaterial("Materials/red_car_material.j3m"));
 		d.setCamera(cam);
 		//d.setAccelForce(2000f);
+		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(0, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
 				KeyInput.KEY_UP, KeyInput.KEY_DOWN, KeyInput.KEY_RCONTROL, KeyInput.KEY_RIGHT, KeyInput.KEY_LEFT);
@@ -184,7 +182,8 @@ public class Main extends SimpleApplication implements DriverListener {
 	private Driver createP2(J3map carData, String id, int n) {
 		Driver d = new Driver(id);
 		d.createVehicle(assetManager, carData).getSpatial().setMaterial(assetManager.loadMaterial("Materials/blue_car_material.j3m"));
-		d.createPersonalViewPort(renderManager, cam).attachScene(rootNode);
+		d.createGameViewPort(renderManager, cam).attachScene(rootNode);
+		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(1, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
 				KeyInput.KEY_W, KeyInput.KEY_S, KeyInput.KEY_F, KeyInput.KEY_D, KeyInput.KEY_A);
@@ -193,7 +192,8 @@ public class Main extends SimpleApplication implements DriverListener {
 	private Driver createP3(J3map carData, String id, int n) {
 		Driver d = new Driver(id);
 		d.createVehicle(assetManager, carData).getSpatial().setMaterial(assetManager.loadMaterial("Materials/green_car_material.j3m"));
-		d.createPersonalViewPort(renderManager, cam).attachScene(rootNode);
+		d.createGameViewPort(renderManager, cam).attachScene(rootNode);
+		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(2, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
 				KeyInput.KEY_I, KeyInput.KEY_K, KeyInput.KEY_SEMICOLON, KeyInput.KEY_L, KeyInput.KEY_J);
@@ -202,7 +202,8 @@ public class Main extends SimpleApplication implements DriverListener {
 	private Driver createP4(J3map carData, String id, int n) {
 		Driver d = new Driver(id);
 		d.createVehicle(assetManager, carData).getSpatial().setMaterial(assetManager.loadMaterial("Materials/yellow_car_material.j3m"));
-		d.createPersonalViewPort(renderManager, cam).attachScene(rootNode);
+		d.createGameViewPort(renderManager, cam).attachScene(rootNode);
+		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(3, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
 				KeyInput.KEY_NUMPAD8, KeyInput.KEY_NUMPAD5, KeyInput.KEY_NUMPADENTER, KeyInput.KEY_NUMPAD6, KeyInput.KEY_NUMPAD4);
@@ -226,6 +227,14 @@ public class Main extends SimpleApplication implements DriverListener {
 	}
 	private PhysicsSpace getPhysicsSpace() {
 		return bulletapp.getPhysicsSpace();
+	}
+	private String getNumberSuffix(int n) {
+		switch (n) {
+			case 1: return "st";
+			case 2: return "nd";
+			case 3: return "rd";
+			default: return "th";
+		}
 	}
 
 	private static int wrap(int n, int min, int max) {
