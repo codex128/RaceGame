@@ -1,6 +1,6 @@
 model: "Models/ferrari/Car.j3o";
 scale: .5f;
-mass: 1000f;
+mass: 2000f;
 wheels: {
     fr: "WheelFrontRight";
     fl: "WheelFrontLeft";

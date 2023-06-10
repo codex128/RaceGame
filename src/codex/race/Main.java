@@ -20,14 +20,10 @@ import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Geometry;
-import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.simsilica.lemur.Container;
+import com.jme3.system.AppSettings;
 import com.simsilica.lemur.GuiGlobals;
-import com.simsilica.lemur.HAlignment;
 import com.simsilica.lemur.Label;
-import com.simsilica.lemur.VAlignment;
-import com.simsilica.lemur.component.DynamicInsetsComponent;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -41,8 +37,8 @@ public class Main extends SimpleApplication implements DriverListener {
 	BulletAppState bulletapp;
 	Driver[] drivers;
 	Spatial track;
-	final int numPlayers = 4;
-	final int numLaps = 1;
+	final int numPlayers = 3;
+	final int numLaps = 5;
 	ArrayList<LapTrigger> triggers = new ArrayList<>();
 	int driversFinished = 0;
 	Vector2f windowSize;
@@ -53,6 +49,9 @@ public class Main extends SimpleApplication implements DriverListener {
 	
     public static void main(String[] args) {
         Main app = new Main();
+		AppSettings as = new AppSettings(true);
+		as.setUseJoysticks(true);
+		app.setSettings(as);
         app.start();
     }
 
@@ -71,7 +70,10 @@ public class Main extends SimpleApplication implements DriverListener {
 		//bulletapp.setDebugEnabled(true);
 		stateManager.attach(bulletapp);
 		
-		Spatial track = assetManager.loadModel("Models/racetrack.j3o");
+		//cam.setFov(120f);
+		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
+		
+		Spatial track = assetManager.loadModel("Models/racetrack3.j3o");
 		track.setMaterial(assetManager.loadMaterial("Materials/track_material.j3m"));
 		rootNode.attachChild(track);
 		
@@ -128,10 +130,13 @@ public class Main extends SimpleApplication implements DriverListener {
 			rootNode.attachChild(drivers[i].getVehicle().getSpatial());
 			getPhysicsSpace().add(drivers[i].getVehicle());
 			t.set(s.next());
+			drivers[i].configureGui(assetManager, windowSize);
 			drivers[i].getVehicle().setPhysicsLocation(t.getTranslation());
 			drivers[i].getVehicle().setPhysicsRotation(t.getRotation());
 			drivers[i].addListener(this);
 		}
+		
+		//getPhysicsSpace().setGravity(new Vector3f(0f, -50f, 0f));
 		
     }
     @Override
@@ -140,7 +145,7 @@ public class Main extends SimpleApplication implements DriverListener {
 			d.update(tpf);
 			d.detectLapTriggers(triggers, numLaps);
 			d.minimizeCarOcclusion(track);
-			if (d.getVehicle().getPhysicsLocation().y < -20f) {
+			if (d.getVehicle().getPhysicsLocation().y < -100f) {
 				int i = wrap(d.getNextTriggerIndex()-1, 0, triggers.size()-1);
 				Spatial s = triggers.get(i).getSpatial();
 				d.getVehicle().setPhysicsLocation(s.getWorldTranslation());
@@ -176,7 +181,7 @@ public class Main extends SimpleApplication implements DriverListener {
 		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(0, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
-				KeyInput.KEY_UP, KeyInput.KEY_DOWN, KeyInput.KEY_RCONTROL, KeyInput.KEY_RIGHT, KeyInput.KEY_LEFT);
+				KeyInput.KEY_UP, KeyInput.KEY_DOWN, KeyInput.KEY_RSHIFT, KeyInput.KEY_RCONTROL, KeyInput.KEY_RETURN, KeyInput.KEY_RIGHT, KeyInput.KEY_LEFT);
 		return d;
 	}
 	private Driver createP2(J3map carData, String id, int n) {
@@ -186,7 +191,7 @@ public class Main extends SimpleApplication implements DriverListener {
 		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(1, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
-				KeyInput.KEY_W, KeyInput.KEY_S, KeyInput.KEY_F, KeyInput.KEY_D, KeyInput.KEY_A);
+				KeyInput.KEY_W, KeyInput.KEY_S, KeyInput.KEY_1, KeyInput.KEY_Q, KeyInput.KEY_F, KeyInput.KEY_D, KeyInput.KEY_A);
 		return d;
 	}
 	private Driver createP3(J3map carData, String id, int n) {
@@ -196,7 +201,7 @@ public class Main extends SimpleApplication implements DriverListener {
 		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(2, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
-				KeyInput.KEY_I, KeyInput.KEY_K, KeyInput.KEY_SEMICOLON, KeyInput.KEY_L, KeyInput.KEY_J);
+				KeyInput.KEY_I, KeyInput.KEY_K, KeyInput.KEY_7, KeyInput.KEY_U, KeyInput.KEY_SEMICOLON, KeyInput.KEY_L, KeyInput.KEY_J);
 		return d;
 	}
 	private Driver createP4(J3map carData, String id, int n) {
@@ -205,8 +210,9 @@ public class Main extends SimpleApplication implements DriverListener {
 		d.createGameViewPort(renderManager, cam).attachScene(rootNode);
 		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(3, n));
-		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
-				KeyInput.KEY_NUMPAD8, KeyInput.KEY_NUMPAD5, KeyInput.KEY_NUMPADENTER, KeyInput.KEY_NUMPAD6, KeyInput.KEY_NUMPAD4);
+		//d.initializeInputs(GuiGlobals.getInstance().getInputMapper(),
+		//		KeyInput.KEY_NUMPAD5, KeyInput.KEY_NUMPAD1, KeyInput.KEY_NUMPAD7, KeyInput.KEY_NUMPAD4, KeyInput.KEY_NUMPADENTER, KeyInput.KEY_NUMPAD2, KeyInput.KEY_NUMPAD3);
+		inputManager.addRawInputListener(d);
 		return d;
 	}
 	private Vector4f getViewSize(int i, int n) {

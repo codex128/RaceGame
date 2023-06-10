@@ -14,10 +14,21 @@ import com.jme3.bullet.control.VehicleControl;
 import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
+import com.jme3.input.JoystickAxis;
+import com.jme3.input.JoystickButton;
+import com.jme3.input.RawInputListener;
+import com.jme3.input.event.JoyAxisEvent;
+import com.jme3.input.event.JoyButtonEvent;
+import com.jme3.input.event.KeyInputEvent;
+import com.jme3.input.event.MouseButtonEvent;
+import com.jme3.input.event.MouseMotionEvent;
+import com.jme3.input.event.TouchEvent;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Plane;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
 import com.jme3.renderer.Camera;
@@ -27,7 +38,6 @@ import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.simsilica.lemur.Label;
 import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
@@ -40,7 +50,7 @@ import java.util.LinkedList;
  *
  * @author gary
  */
-public class Driver implements StateFunctionListener, Listenable<DriverListener> {
+public class Driver implements RawInputListener, StateFunctionListener, Listenable<DriverListener> {
 	
 	private static final Plane VIEW_PLANE = new Plane(Vector3f.UNIT_Y, Vector3f.ZERO);
 	
@@ -50,13 +60,17 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 	Camera guiCam;
 	Node gui;
 	Vector4f viewSize;
-	FunctionId gas, flip, steer;
-	float accelForce = 10000f;
+	FunctionId gas, viewToggle, reverseToggle, flip, steer;
+	Node gearshift;
+	int viewNum = 1;
+	float baseAccelForce = 12000f;
 	float steerAngle = .5f;
+	int accelDirection = 0;
 	int nextTrigger = 0;
 	int lap = 0;
 	boolean finished = false;
 	float camHeight = 10f;
+	boolean reverseCam = false;
 	LinkedList<DriverListener> listeners = new LinkedList<>();
 	
 	public Driver(String id) {
@@ -132,22 +146,26 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 	}
 	public ViewPort createGameViewPort(RenderManager rm, Camera base) {
 		gameCam = base.clone();
+		//gameCam.setFov(90f);
 		ViewPort vp = rm.createMainView(id+"-view", gameCam);
 		vp.setClearFlags(true, true, true);
 		return vp;
 	}
 	public ViewPort createGuiViewPort(RenderManager rm, Camera base) {
-		guiCam = base.clone();
+		guiCam = new Camera(base.getWidth(), base.getHeight());
+		guiCam.setParallelProjection(true);
+		guiCam.setLocation(new Vector3f(guiCam.getWidth()/2, guiCam.getHeight()/2, 100f));
 		gui = new Node(id+"-gui");
 		gui.setQueueBucket(RenderQueue.Bucket.Gui);
+		gui.setCullHint(Spatial.CullHint.Never);
 		ViewPort vp = rm.createPostView(id+"-gui-view", guiCam);
 		vp.setBackgroundColor(ColorRGBA.randomColor());
-		vp.setClearColor(true);
+//		vp.setClearColor(true);
 		vp.attachScene(gui);
-		Label l = new Label("Hello World");
-		gui.attachChild(l);
-		l.setLocalTranslation(300, 300, 0);
-		l.setFontSize(50f);
+//		Label l = new Label("Hello World");
+//		gui.attachChild(l);
+//		l.setLocalTranslation(300, 300, 0);
+//		l.setFontSize(50f);
 		return vp;
 	}
 	public void setViewSize(Vector4f size) {
@@ -161,16 +179,24 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 	public void setCamera(Camera cam) {
 		this.gameCam = cam;
 	}
-	public void setAccelForce(float accel) {
-		accelForce = accel;
+	public void setBaseAccelForce(float accel) {
+		baseAccelForce = accel;
 	}
 	
 	public void update(float tpf) {		
 		if (car == null || gameCam == null) return;
-		Vector3f planar = VIEW_PLANE.getClosestPoint(car.getPhysicsRotation().getRotationColumn(2));
-		Vector3f pos = car.getPhysicsLocation().add(planar.multLocal(30f)).addLocal(0f, camHeight, 0f);
-		gameCam.setLocation(gameCam.getLocation().add(pos.subtractLocal(gameCam.getLocation()).divideLocal(10f)));
-		gameCam.lookAt(car.getPhysicsLocation(), Vector3f.UNIT_Y);
+		Vector3f view = getFPVector(viewNum);
+		if (view != null) {
+			gameCam.setLocation(car.getPhysicsLocation().add(car.getPhysicsRotation().mult(view)));
+			Quaternion tilted = new Quaternion().lookAt(car.getPhysicsRotation().mult(new Vector3f(0f, 0f, (reverseCam ? 1f : -1f))), FastMath.interpolateLinear(.5f, Vector3f.UNIT_Y, car.getPhysicsRotation().mult(Vector3f.UNIT_Y)));
+			gameCam.setRotation(tilted);
+		}
+		else {
+			Vector3f planar = VIEW_PLANE.getClosestPoint(car.getPhysicsRotation().getRotationColumn(2));
+			Vector3f pos = car.getPhysicsLocation().add(planar.multLocal(30f)).addLocal(0f, camHeight, 0f);
+			gameCam.setLocation(gameCam.getLocation().add(pos.subtractLocal(gameCam.getLocation()).divideLocal(10f)));
+			gameCam.lookAt(car.getPhysicsLocation(), Vector3f.UNIT_Y);
+		}
 	}
 	public void updateNodeStates(float tpf) {
 		gui.updateLogicalState(tpf);
@@ -183,7 +209,7 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 		Ray ray = new Ray(car.getPhysicsLocation(), VIEW_PLANE.getClosestPoint(car.getPhysicsRotation().getRotationColumn(2)).negateLocal());
 		CollisionResults res = new CollisionResults();
 		spatial.collideWith(ray, res);
-		if (res.size() > 0 && res.getClosestCollision().getDistance() < 1f) {
+		if (res.size() > 0 && res.getClosestCollision().getDistance() < 2f) {
 			if (nextTrigger == 0 && ++lap > laps) {
 				car.accelerate(0f);
 				car.steer(0f);
@@ -213,6 +239,30 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 			}
 		}
 	}
+	public void configureGui(AssetManager assets, Vector2f windowSize) {
+		gearshift = (Node)assets.loadModel("Models/gear_panel.j3o");
+		gearshift.setMaterial(assets.loadMaterial("Materials/gear_panel_material.j3m"));
+		gearshift.setLocalTranslation(windowSize.x, 0f, 0f);
+		//float scale = 1f;
+		//gearshift.setLocalScale(scale, scale, -scale);
+		//gui.attachChild(gearshift);
+	}
+	public void toggleViewNum() {
+		if (++viewNum > 4) viewNum = 0;
+	}
+	private void applyAcceleration() {
+		//car.accelerate(-(baseAccelForce+gearFactor*viewNum)*accelDirection);
+		car.accelerate(-baseAccelForce*accelDirection);
+	}
+	private Vector3f getFPVector(int n) {
+		switch (n) {
+			case 1:  return new Vector3f(0f, 2f, 0f);
+			case 2:  return new Vector3f(2.5f, 1f, 0f);
+			case 3:  return new Vector3f(-2.5f, 1f, 0f);
+			case 4:  return new Vector3f(0f, 3f, 5f);
+			default: return null;
+		}
+	}
 	
 	public VehicleControl getVehicle() {
 		return car;
@@ -240,36 +290,36 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 		return listeners;
 	}
 	
-	public void initializeInputs(InputMapper im, int drive, int reverse, int flip, int right, int left) {
+	public void initializeInputs(InputMapper im, int drive, int reverse, int toggleView, int toggleReverse, int flip, int right, int left) {
 		gas = new FunctionId(id+"-input", "gas");
+		viewToggle = new FunctionId(id+"-input", "view-toggle");
+		reverseToggle = new FunctionId(id+"-input", "reverse-toggle");
 		this.flip = new FunctionId(id+"-input", "flip");
 		steer = new FunctionId(id+"-input", "steer");
 		im.map(gas, InputState.Positive, drive);
 		im.map(gas, InputState.Negative, reverse);
+		im.map(viewToggle, toggleView);
+		im.map(reverseToggle, toggleReverse);
 		im.map(this.flip, flip);
 		im.map(steer, InputState.Positive, right);
 		im.map(steer, InputState.Negative, left);
 		listenToInputs(im);
 	}
 	public void listenToInputs(InputMapper im) {		
-		im.addStateListener(this, gas, this.flip, steer);
+		im.addStateListener(this, gas, viewToggle, reverseToggle, flip, steer);
 		im.activateGroup(id+"-input");
 	}
 	public void cleanupInputs(InputMapper im) {
 		if (gas == null || steer == null) return;
-		im.removeStateListener(this, gas, flip, steer);
+		im.removeStateListener(this, gas, viewToggle, reverseToggle, flip, steer);
 		im.deactivateGroup(id+"-input");
 	}
 	@Override
 	public void valueChanged(FunctionId func, InputState value, double tpf) {
 		if (finished) return;
 		if (func == gas) {
-			if (value != InputState.Off) {
-				car.accelerate(-accelForce*value.asNumber());
-			}
-			else {
-				car.accelerate(0f);
-			}
+			accelDirection = value.asNumber();
+			applyAcceleration();
 		}
 		else if (func == steer) {
 			if (value != InputState.Off) {
@@ -278,6 +328,12 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 			else {
 				car.steer(0f);
 			}
+		}
+		else if (func == viewToggle && value != InputState.Off) {
+			toggleViewNum();
+		}
+		else if (func == reverseToggle) {
+			reverseCam = !reverseCam;
 		}
 		else if (func == flip && value != InputState.Off) {
 			car.setAngularVelocity(car.getPhysicsRotation().getRotationColumn(2).negateLocal().multLocal(5f));
@@ -297,6 +353,53 @@ public class Driver implements StateFunctionListener, Listenable<DriverListener>
 			}
 		}
 		return null;
-	}	
+	}
+	private static int sign(double value) {
+		if (value > 0) return 1;
+		else if (value < -1) return -1;
+		else return 0;
+	}
+
+	@Override
+	public void beginInput() {}
+	@Override
+	public void endInput() {}
+	@Override
+	public void onJoyAxisEvent(JoyAxisEvent evt) {
+		if (finished) return;
+		if (evt.getAxis().getLogicalId().equals(JoystickAxis.Z_ROTATION)) {
+			car.steer(-steerAngle*evt.getValue());
+		}
+	}
+	@Override
+	public void onJoyButtonEvent(JoyButtonEvent evt) {
+		if (finished) return;
+		if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_0)) {
+			accelDirection = evt.isPressed() ? 1 : 0;
+			applyAcceleration();
+		}
+		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_1)) {
+			accelDirection = evt.isPressed() ? -1 : 0;
+			applyAcceleration();
+		}
+		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_11) && evt.isPressed()) {
+			toggleViewNum();
+		}
+		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_10) && evt.isPressed()) {
+			reverseCam = !reverseCam;
+		}
+		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_8) && evt.isPressed()) {
+			car.setAngularVelocity(car.getPhysicsRotation().getRotationColumn(2).negateLocal().multLocal(5f));
+		}
+	}
+	@Override
+	public void onMouseMotionEvent(MouseMotionEvent evt) {}
+	@Override
+	public void onMouseButtonEvent(MouseButtonEvent evt) {}
+	@Override
+	public void onKeyEvent(KeyInputEvent evt) {}
+	@Override
+	public void onTouchEvent(TouchEvent evt) {}
+	
 	
 }
