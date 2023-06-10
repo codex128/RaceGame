@@ -1,6 +1,8 @@
 model: "Models/ferrari/Car.j3o";
 scale: .5f;
 mass: 2000f;
+accelleration: 12000f;
+steeringAngle: .5f;
 wheels: {
     fr: "WheelFrontRight";
     fl: "WheelFrontLeft";

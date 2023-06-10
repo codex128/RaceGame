@@ -5,9 +5,7 @@
 package codex.race;
 
 import com.jme3.input.KeyInput;
-import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
-import com.simsilica.lemur.input.InputState;
 
 /**
  *
@@ -15,18 +13,18 @@ import com.simsilica.lemur.input.InputState;
  */
 public class Functions {
 	
-	public static final String
-			DRIVER_GROUP = "driver-group";
-	
-	public static final FunctionId
-			F_GAS = new FunctionId(DRIVER_GROUP, "gas"),
-			F_STEER = new FunctionId(DRIVER_GROUP, "steer");
+	public static final DriverFunctionSet
+			ARROW_KEYS = new DriverFunctionSet("arrow-keys"),
+			WASD = new DriverFunctionSet("wasd"),
+			IJKL = new DriverFunctionSet("ijkl");
 	
 	public static void initialize(InputMapper im) {
-		im.map(F_GAS, InputState.Positive, KeyInput.KEY_W);
-		im.map(F_GAS, InputState.Negative, KeyInput.KEY_S);
-		im.map(F_STEER, InputState.Positive, KeyInput.KEY_D);
-		im.map(F_STEER, InputState.Negative, KeyInput.KEY_A);
+		ARROW_KEYS.initialize(im, KeyInput.KEY_UP, KeyInput.KEY_DOWN,
+				KeyInput.KEY_RIGHT, KeyInput.KEY_LEFT, KeyInput.KEY_RCONTROL);
+		WASD.initialize(im, KeyInput.KEY_W, KeyInput.KEY_S,
+				KeyInput.KEY_D, KeyInput.KEY_A, KeyInput.KEY_F);
+		IJKL.initialize(im, KeyInput.KEY_I, KeyInput.KEY_K,
+				KeyInput.KEY_L, KeyInput.KEY_J, KeyInput.KEY_SEMICOLON);
 	}
 	
 }

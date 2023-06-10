@@ -1,0 +1,4 @@
+length: 3;
+race1: "Properties/racetrack1.j3map";
+race2: "Properties/racetrack2.j3map";
+race3: "Properties/racetrack3.j3map";

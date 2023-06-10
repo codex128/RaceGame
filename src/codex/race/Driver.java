@@ -38,6 +38,7 @@ import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
+import com.simsilica.lemur.Label;
 import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
@@ -54,38 +55,38 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 	
 	private static final Plane VIEW_PLANE = new Plane(Vector3f.UNIT_Y, Vector3f.ZERO);
 	
+	Player player;
 	String id;
 	VehicleControl car;
 	Camera gameCam;
 	Camera guiCam;
 	Node gui;
 	Vector4f viewSize;
-	FunctionId gas, viewToggle, reverseToggle, flip, steer;
-	Node gearshift;
-	int viewNum = 1;
+	DriverFunctionSet functions;
 	float baseAccelForce = 12000f;
 	float steerAngle = .5f;
 	int accelDirection = 0;
 	int nextTrigger = 0;
 	int lap = 0;
 	boolean finished = false;
-	float camHeight = 10f;
-	boolean reverseCam = false;
 	LinkedList<DriverListener> listeners = new LinkedList<>();
 	
-	public Driver(String id) {
-		this.id = id;
+	public Driver(Player player) {
+		this.player = player;
+		id = "p"+player.getPlayerNumber();
+		baseAccelForce = player.getCarData().getFloat("accelleration", 12000f);
+		steerAngle = player.getCarData().getFloat("steeringAngle", .5f);
 	}
 	
-	public VehicleControl createVehicle(AssetManager assets, J3map source) {
-		return createVehicle(assets.loadModel(source.getString("model")), source);
+	public VehicleControl createVehicle(AssetManager assets) {
+		return createVehicle(assets.loadModel(player.getCarData().getString("model")));
 	}
-	public VehicleControl createVehicle(Spatial model, J3map source) {
-		J3map suspension = source.getJ3map("suspension");
+	public VehicleControl createVehicle(Spatial model) {
+		J3map suspension = player.getCarData().getJ3map("suspension");
 		float stiffness = suspension.getFloat("stiffness", 120f);
         float compValue = suspension.getFloat("compression", .2f);
         float dampValue = suspension.getFloat("damping", .3f);
-        final float mass = source.getFloat("mass", 200f);
+        final float mass = player.getCarData().getFloat("mass", 200f);
 
         //Load model and get chassis Geometry
         Geometry chasis = getChildGeometry(model, "Car");
@@ -108,7 +109,7 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
         //note that our fancy car actually goes backwards..
         Vector3f wheelDirection = new Vector3f(0, -1, 0);
         Vector3f wheelAxle = new Vector3f(-1, 0, 0);
-		J3map wheels = source.getJ3map("wheels");
+		J3map wheels = player.getCarData().getJ3map("wheels");
 		
         Geometry wheel_fr = getChildGeometry(model, wheels.getString("fr"));
         wheel_fr.center();
@@ -185,18 +186,9 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 	
 	public void update(float tpf) {		
 		if (car == null || gameCam == null) return;
-		Vector3f view = getFPVector(viewNum);
-		if (view != null) {
-			gameCam.setLocation(car.getPhysicsLocation().add(car.getPhysicsRotation().mult(view)));
-			Quaternion tilted = new Quaternion().lookAt(car.getPhysicsRotation().mult(new Vector3f(0f, 0f, (reverseCam ? 1f : -1f))), FastMath.interpolateLinear(.5f, Vector3f.UNIT_Y, car.getPhysicsRotation().mult(Vector3f.UNIT_Y)));
-			gameCam.setRotation(tilted);
-		}
-		else {
-			Vector3f planar = VIEW_PLANE.getClosestPoint(car.getPhysicsRotation().getRotationColumn(2));
-			Vector3f pos = car.getPhysicsLocation().add(planar.multLocal(30f)).addLocal(0f, camHeight, 0f);
-			gameCam.setLocation(gameCam.getLocation().add(pos.subtractLocal(gameCam.getLocation()).divideLocal(10f)));
-			gameCam.lookAt(car.getPhysicsLocation(), Vector3f.UNIT_Y);
-		}
+		gameCam.setLocation(car.getPhysicsLocation().add(car.getPhysicsRotation().mult(new Vector3f(0f, 2f, 0f))));
+		Quaternion tilted = new Quaternion().lookAt(car.getPhysicsRotation().mult(new Vector3f(0f, 0f, -1f)), FastMath.interpolateLinear(.5f, Vector3f.UNIT_Y, car.getPhysicsRotation().mult(Vector3f.UNIT_Y)));
+		gameCam.setRotation(tilted);
 	}
 	public void updateNodeStates(float tpf) {
 		gui.updateLogicalState(tpf);
@@ -210,12 +202,16 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 		CollisionResults res = new CollisionResults();
 		spatial.collideWith(ray, res);
 		if (res.size() > 0 && res.getClosestCollision().getDistance() < 2f) {
-			if (nextTrigger == 0 && ++lap > laps) {
-				car.accelerate(0f);
-				car.steer(0f);
-				lap = laps;
-				finished = true;
-				notifyListeners(l -> l.onDriverFinish(this));
+			if (nextTrigger == 0) {
+				lap++;
+				((Label)gui.getChild("lap-counter")).setText("Lap "+Math.min(Math.max(lap, 1), laps)+"/"+laps);
+				if (lap > laps) {
+					car.accelerate(0f);
+					car.steer(0f);
+					lap = laps;
+					finished = true;
+					notifyListeners(l -> l.onDriverFinish(this));
+				}
 			}
 			if (++nextTrigger >= triggers.size()) {
 				nextTrigger = 0;
@@ -224,46 +220,38 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 		}
 		return false;
 	}
-	public void minimizeCarOcclusion(Spatial track) {
-		Vector3f focus = car.getPhysicsLocation().add(0f, .5f, 0f);
-		Ray r = new Ray(gameCam.getLocation(), focus.subtract(gameCam.getLocation()).normalizeLocal());
-		CollisionResults res = new CollisionResults();
-		track.collideWith(r, res);
-		if (res.size() > 0) {
-			CollisionResult closest = res.getClosestCollision();
-			if (closest.getDistance() < gameCam.getLocation().distance(focus)) {
-				camHeight = Math.min(camHeight+1f, 30f);
-			}
-			else {
-				camHeight = Math.max(camHeight-1f, 10f);
-			}
-		}
-	}
 	public void configureGui(AssetManager assets, Vector2f windowSize) {
-		gearshift = (Node)assets.loadModel("Models/gear_panel.j3o");
-		gearshift.setMaterial(assets.loadMaterial("Materials/gear_panel_material.j3m"));
-		gearshift.setLocalTranslation(windowSize.x, 0f, 0f);
-		//float scale = 1f;
-		//gearshift.setLocalScale(scale, scale, -scale);
-		//gui.attachChild(gearshift);
+//		gearshift = (Node)assets.loadModel("Models/gear_panel.j3o");
+//		gearshift.setMaterial(assets.loadMaterial("Materials/gear_panel_material.j3m"));
+//		gearshift.setLocalTranslation(windowSize.x, 0f, 0f);
+//		float scale = 1f;
+//		gearshift.setLocalScale(scale, scale, -scale);
+//		gui.attachChild(gearshift);	
+		Label lapLabel = new Label("Lap 1/3");
+		lapLabel.setName("lap-counter");
+		lapLabel.setFontSize(30f);
+		lapLabel.setLocalTranslation(5f, windowSize.y-5f, 0f);
+		gui.attachChild(lapLabel);
 	}
-	public void toggleViewNum() {
-		if (++viewNum > 4) viewNum = 0;
+	public void warp(Vector3f translation, Quaternion rotation) {
+		car.setPhysicsLocation(translation);
+		car.setPhysicsRotation(rotation);
+		car.setLinearVelocity(Vector3f.ZERO);
+		car.setAngularVelocity(Vector3f.ZERO);
 	}
 	private void applyAcceleration() {
 		//car.accelerate(-(baseAccelForce+gearFactor*viewNum)*accelDirection);
 		car.accelerate(-baseAccelForce*accelDirection);
 	}
-	private Vector3f getFPVector(int n) {
-		switch (n) {
-			case 1:  return new Vector3f(0f, 2f, 0f);
-			case 2:  return new Vector3f(2.5f, 1f, 0f);
-			case 3:  return new Vector3f(-2.5f, 1f, 0f);
-			case 4:  return new Vector3f(0f, 3f, 5f);
-			default: return null;
-		}
+	
+	public void cleanupViewPorts(RenderManager rm) {
+		rm.removeMainView(id+"-view");
+		rm.removePostView(id+"-gui-view");
 	}
 	
+	public Player getControllingPlayer() {
+		return player;
+	}
 	public VehicleControl getVehicle() {
 		return car;
 	}
@@ -290,38 +278,24 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 		return listeners;
 	}
 	
-	public void initializeInputs(InputMapper im, int drive, int reverse, int toggleView, int toggleReverse, int flip, int right, int left) {
-		gas = new FunctionId(id+"-input", "gas");
-		viewToggle = new FunctionId(id+"-input", "view-toggle");
-		reverseToggle = new FunctionId(id+"-input", "reverse-toggle");
-		this.flip = new FunctionId(id+"-input", "flip");
-		steer = new FunctionId(id+"-input", "steer");
-		im.map(gas, InputState.Positive, drive);
-		im.map(gas, InputState.Negative, reverse);
-		im.map(viewToggle, toggleView);
-		im.map(reverseToggle, toggleReverse);
-		im.map(this.flip, flip);
-		im.map(steer, InputState.Positive, right);
-		im.map(steer, InputState.Negative, left);
-		listenToInputs(im);
-	}
-	public void listenToInputs(InputMapper im) {		
-		im.addStateListener(this, gas, viewToggle, reverseToggle, flip, steer);
-		im.activateGroup(id+"-input");
+	public void initializeInputs(InputMapper im, DriverFunctionSet functions) {
+		this.functions = functions;
+		im.addStateListener(this, functions.getFunctions());
+		functions.activateGroup(im, true);
 	}
 	public void cleanupInputs(InputMapper im) {
-		if (gas == null || steer == null) return;
-		im.removeStateListener(this, gas, viewToggle, reverseToggle, flip, steer);
-		im.deactivateGroup(id+"-input");
+		if (functions == null) return;
+		im.removeStateListener(this, functions.getFunctions());
+		functions.activateGroup(im, false);
 	}
 	@Override
 	public void valueChanged(FunctionId func, InputState value, double tpf) {
 		if (finished) return;
-		if (func == gas) {
+		if (func == functions.getDrive()) {
 			accelDirection = value.asNumber();
 			applyAcceleration();
 		}
-		else if (func == steer) {
+		else if (func == functions.getSteer()) {
 			if (value != InputState.Off) {
 				car.steer(-steerAngle*value.asNumber());
 			}
@@ -329,13 +303,7 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 				car.steer(0f);
 			}
 		}
-		else if (func == viewToggle && value != InputState.Off) {
-			toggleViewNum();
-		}
-		else if (func == reverseToggle) {
-			reverseCam = !reverseCam;
-		}
-		else if (func == flip && value != InputState.Off) {
+		else if (func == functions.getFlip() && value != InputState.Off) {
 			car.setAngularVelocity(car.getPhysicsRotation().getRotationColumn(2).negateLocal().multLocal(5f));
 		}
 	}
@@ -381,12 +349,6 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_1)) {
 			accelDirection = evt.isPressed() ? -1 : 0;
 			applyAcceleration();
-		}
-		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_11) && evt.isPressed()) {
-			toggleViewNum();
-		}
-		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_10) && evt.isPressed()) {
-			reverseCam = !reverseCam;
 		}
 		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_8) && evt.isPressed()) {
 			car.setAngularVelocity(car.getPhysicsRotation().getRotationColumn(2).negateLocal().multLocal(5f));
