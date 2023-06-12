@@ -1,6 +1,6 @@
 name: "GrandPrix1";
 length: 5;
-startIndex: 4;
+startIndex: 2;
 race0: "Properties/racetrack1.j3map";
 race1: "Properties/racetrack2.j3map";
 race2: "Properties/racetrack3.j3map";
