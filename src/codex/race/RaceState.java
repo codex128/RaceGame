@@ -14,6 +14,7 @@ import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.bullet.control.VehicleControl;
 import com.jme3.light.DirectionalLight;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Transform;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
@@ -152,6 +153,7 @@ public class RaceState extends GameAppState implements DriverListener,
 		for (Spatial spatial : it) {
 			if (spatial.getName().startsWith("start")) {
 				starts.add(spatial.getWorldTransform());
+				it.ignoreChildren();
 				continue;
 			}
 			Double trigger = spatial.getUserData("trigger");
@@ -166,16 +168,15 @@ public class RaceState extends GameAppState implements DriverListener,
 					i++;
 				}
 				triggers.add(i, new LapTrigger(spatial, index));
+				it.ignoreChildren();
 				continue;
 			}
 			Double mass = spatial.getUserData("mass");
-			if (spatial instanceof Geometry || mass != null) {				
+			if (spatial instanceof Geometry || mass != null) {
 				RigidBodyControl rigidbody = new RigidBodyControl(mass != null ? mass.floatValue() : 0f);
 				spatial.addControl(rigidbody);
 				getPhysicsSpace().add(rigidbody);
-				if (mass != null) {
-					it.ignoreChildren();
-				}
+				it.ignoreChildren();
 			}
 		}
 		
@@ -201,6 +202,7 @@ public class RaceState extends GameAppState implements DriverListener,
 			drivers[i].warp(t.getTranslation(), t.getRotation());
 			drivers[i].addListener(this);
 		}
+		
 	}
 	
 	private Driver createP1(Player player, int n) {

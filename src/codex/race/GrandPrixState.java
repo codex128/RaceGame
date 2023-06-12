@@ -25,7 +25,7 @@ public class GrandPrixState extends GameAppState implements RaceListener {
 	protected void init(Application app) {
 		
 		J3map commonCar = (J3map)assetManager.loadAsset("Properties/MyCar.j3map");
-		players = new Player[]{new Player(0), new Player(1), new Player(2), /*new Player(3)*/};
+		players = new Player[]{new Player(0), new Player(1), /*new Player(2), /*new Player(3)*/};
 		for (Player p : players) {
 			p.setCarData(commonCar);
 		}

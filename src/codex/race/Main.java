@@ -19,7 +19,7 @@ import com.simsilica.lemur.GuiGlobals;
  */
 public class Main extends SimpleApplication {
 	
-	BulletAppState bulletapp;
+	
 	
 	public Main() {
 		super((AppState) null);
@@ -46,7 +46,7 @@ public class Main extends SimpleApplication {
 		
 		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
 		
-		bulletapp = new BulletAppState();
+		BulletAppState bulletapp = new BulletAppState();
 		//bulletapp.setDebugEnabled(true);
 		stateManager.attach(bulletapp);
 		

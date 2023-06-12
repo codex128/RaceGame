@@ -1,0 +1,3 @@
+model: "Models/looptrack.j3o";
+deathzone: -130f;
+laps: 3;
