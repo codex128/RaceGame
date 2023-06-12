@@ -141,14 +141,15 @@ public class RaceState extends GameAppState implements DriverListener,
 		assert players.size() >= 1 && players.size() <= 4;
 		
 		track = assetManager.loadModel(trackData.getString("model"));
-		track.setMaterial(assetManager.loadMaterial("Materials/track_material.j3m"));
+		//track.setMaterial(assetManager.loadMaterial("Materials/track_material.j3m"));
 		scene.attachChild(track);
 		
 		deathzone = trackData.getFloat("deathzone", -20f);
 		numLaps = trackData.getInteger("laps", 3);
 		
 		ArrayList<Transform> starts = new ArrayList<>();
-		for (Spatial spatial : new SceneGraphIterator(track)) {
+		SceneGraphIterator it = new SceneGraphIterator(track);
+		for (Spatial spatial : it) {
 			if (spatial.getName().startsWith("start")) {
 				starts.add(spatial.getWorldTransform());
 				continue;
@@ -167,10 +168,14 @@ public class RaceState extends GameAppState implements DriverListener,
 				triggers.add(i, new LapTrigger(spatial, index));
 				continue;
 			}
-			if (spatial instanceof Geometry) {				
-				RigidBodyControl staticbody = new RigidBodyControl(0f);
-				spatial.addControl(staticbody);
-				getPhysicsSpace().add(staticbody);
+			Double mass = spatial.getUserData("mass");
+			if (spatial instanceof Geometry || mass != null) {				
+				RigidBodyControl rigidbody = new RigidBodyControl(mass != null ? mass.floatValue() : 0f);
+				spatial.addControl(rigidbody);
+				getPhysicsSpace().add(rigidbody);
+				if (mass != null) {
+					it.ignoreChildren();
+				}
 			}
 		}
 		
