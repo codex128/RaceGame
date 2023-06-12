@@ -51,7 +51,8 @@ import java.util.LinkedList;
  *
  * @author gary
  */
-public class Driver implements RawInputListener, StateFunctionListener, Listenable<DriverListener> {
+public class Driver implements RawInputListener, StateFunctionListener,
+		Listenable<DriverListener>, SoundTrigger {
 	
 	private static final Plane VIEW_PLANE = new Plane(Vector3f.UNIT_Y, Vector3f.ZERO);
 	
@@ -63,6 +64,7 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 	Node gui;
 	Vector4f viewSize;
 	DriverFunctionSet functions;
+	MultiplayerAudioMap audio;
 	float baseAccelForce = 12000f;
 	float steerAngle = .5f;
 	int accelDirection = 0;
@@ -180,6 +182,11 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 	public void setCamera(Camera cam) {
 		this.gameCam = cam;
 	}
+	public void setAudio(MultiplayerAudioMap audio) {
+		if (this.audio != null) this.audio.removeVoter(this);
+		this.audio = audio;
+		if (this.audio != null) this.audio.registerVoter(this);
+	}
 	public void setBaseAccelForce(float accel) {
 		baseAccelForce = accel;
 	}
@@ -294,6 +301,7 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 		if (func == functions.getDrive()) {
 			accelDirection = value.asNumber();
 			applyAcceleration();
+			//audio.get("engine").castVote(this, value != InputState.Off);
 		}
 		else if (func == functions.getSteer()) {
 			if (value != InputState.Off) {
@@ -321,11 +329,6 @@ public class Driver implements RawInputListener, StateFunctionListener, Listenab
 			}
 		}
 		return null;
-	}
-	private static int sign(double value) {
-		if (value > 0) return 1;
-		else if (value < -1) return -1;
-		else return 0;
 	}
 
 	@Override

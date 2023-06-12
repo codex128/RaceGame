@@ -12,7 +12,6 @@ import codex.jmeutil.scene.SceneGraphIterator;
 import com.jme3.app.Application;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.bullet.control.VehicleControl;
-import com.jme3.input.KeyInput;
 import com.jme3.light.DirectionalLight;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Transform;
@@ -24,9 +23,11 @@ import com.jme3.scene.Spatial;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.Label;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -38,9 +39,9 @@ public class RaceState extends GameAppState implements DriverListener,
 	Node scene = new Node("race-scene");
 	J3map trackData;
 	Player[] players;
+	Spatial track;
 	ArrayList<LapTrigger> triggers = new ArrayList<>();
 	LinkedList<RaceListener> listeners = new LinkedList<>();
-	Spatial track;
 	Driver[] drivers;
 	int numLaps;
 	float deathzone;
@@ -134,9 +135,12 @@ public class RaceState extends GameAppState implements DriverListener,
 	}
 	
 	public void load(J3map trackData, Player... players) {
-		assert players.length >= 1 && players.length <= 4;
+		load(trackData, Arrays.asList(players));
+	}
+	public void load(J3map trackData, List<Player> players) {
+		assert players.size() >= 1 && players.size() <= 4;
 		
-		Spatial track = assetManager.loadModel(trackData.getString("model"));
+		track = assetManager.loadModel(trackData.getString("model"));
 		track.setMaterial(assetManager.loadMaterial("Materials/track_material.j3m"));
 		scene.attachChild(track);
 		
@@ -163,9 +167,6 @@ public class RaceState extends GameAppState implements DriverListener,
 				triggers.add(i, new LapTrigger(spatial, index));
 				continue;
 			}
-			if (spatial.getName().equals("racetrack")) {
-				this.track = spatial;
-			}
 			if (spatial instanceof Geometry) {				
 				RigidBodyControl staticbody = new RigidBodyControl(0f);
 				spatial.addControl(staticbody);
@@ -173,16 +174,16 @@ public class RaceState extends GameAppState implements DriverListener,
 			}
 		}
 		
-		drivers = new Driver[players.length];		
-		drivers[0] = createP1(players[0], drivers.length);
+		drivers = new Driver[players.size()];		
+		drivers[0] = createP1(players.get(0), drivers.length);
 		if (drivers.length >= 2) {
-			drivers[1] = createP2(players[1], drivers.length);
+			drivers[1] = createP2(players.get(1), drivers.length);
 		}
 		if (drivers.length >= 3) {
-			drivers[2] = createP3(players[2], drivers.length);
+			drivers[2] = createP3(players.get(2), drivers.length);
 		}
 		if (drivers.length >= 4) {
-			drivers[3] = createP4(players[3], drivers.length);
+			drivers[3] = createP4(players.get(3), drivers.length);
 		}
 		
 		Iterator<Transform> s = starts.iterator();

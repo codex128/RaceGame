@@ -17,13 +17,9 @@ import com.simsilica.lemur.GuiGlobals;
  * Move your Logic into AppStates or Controls
  * @author normenhansen
  */
-public class Main extends SimpleApplication implements RaceListener {
+public class Main extends SimpleApplication {
 	
 	BulletAppState bulletapp;
-	Player[] players;
-	J3map grandprix;
-	int prixIndex = 0;
-	RaceState race;
 	
 	public Main() {
 		super((AppState) null);
@@ -54,14 +50,8 @@ public class Main extends SimpleApplication implements RaceListener {
 		//bulletapp.setDebugEnabled(true);
 		stateManager.attach(bulletapp);
 		
-		J3map commonCar = (J3map)assetManager.loadAsset("Properties/MyCar.j3map");
-		players = new Player[]{new Player(0), new Player(1), /*new Player(2), /*new Player(3)*/};
-		for (Player p : players) {
-			p.setCarData(commonCar);
-		}
-		
-		grandprix = (J3map)assetManager.loadAsset("Properties/GrandPrix1.j3map");
-		stateManager.attach(createRace());
+		stateManager.attach(new GrandPrixState(
+				(J3map)assetManager.loadAsset("Properties/GrandPrix1.j3map")));
 		
     }
     @Override
@@ -70,21 +60,5 @@ public class Main extends SimpleApplication implements RaceListener {
 	}
     @Override
     public void simpleRender(RenderManager rm) {}
-	@Override
-	public void onRaceComplete(RaceState race) {
-		if (prixIndex == grandprix.getInteger("length")) return;
-		stateManager.detach(race);
-		enqueue(() -> {
-			stateManager.attach(createRace());
-		});
-	}
-	
-	public RaceState createRace() {
-		String r = grandprix.getString("race"+(++prixIndex));
-		if (r == null) return null;
-		RaceState race = new RaceState((J3map)assetManager.loadAsset(r), players);
-		race.addListener(this);
-		return race;
-	}
 	
 }
