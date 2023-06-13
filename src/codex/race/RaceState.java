@@ -13,8 +13,8 @@ import com.jme3.app.Application;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.bullet.control.VehicleControl;
 import com.jme3.light.DirectionalLight;
+import com.jme3.light.Light;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.Quaternion;
 import com.jme3.math.Transform;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
@@ -44,7 +44,7 @@ public class RaceState extends GameAppState implements DriverListener,
 	ArrayList<LapTrigger> triggers = new ArrayList<>();
 	LinkedList<RaceListener> listeners = new LinkedList<>();
 	Driver[] drivers;
-	int numLaps;
+	int numLaps = -1;
 	float deathzone;
 	int driversFinished = 0;
 	Timer afterward = new Timer(5f);
@@ -54,11 +54,15 @@ public class RaceState extends GameAppState implements DriverListener,
 		this.trackData = trackData;
 		this.players = players;
 	}
+	public RaceState(J3map trackData, Player[] players, int laps) {
+		this(trackData, players);
+		numLaps = laps;
+	}
 	
 	@Override
 	protected void init(Application app) {
 		rootNode.attachChild(scene);		
-		scene.addLight(new DirectionalLight(new Vector3f(0f, -1f, 0f)));
+		scene.addLight(new DirectionalLight(new Vector3f(0f, -1f, 0f), new ColorRGBA(.9f, .9f, .9f, .1f)));
 		scene.addLight(new DirectionalLight(new Vector3f(1f, -1f, 1f), ColorRGBA.DarkGray));
 		scene.addLight(new DirectionalLight(new Vector3f(-1f, -1f, -1f), ColorRGBA.DarkGray));
 		if (trackData != null && players != null) {
@@ -146,7 +150,7 @@ public class RaceState extends GameAppState implements DriverListener,
 		scene.attachChild(track);
 		
 		deathzone = trackData.getFloat("deathzone", -20f);
-		numLaps = trackData.getInteger("laps", 3);
+		if (numLaps < 0) numLaps = trackData.getInteger("laps", 3);
 		
 		ArrayList<Transform> starts = new ArrayList<>();
 		SceneGraphIterator it = new SceneGraphIterator(track);
@@ -200,6 +204,8 @@ public class RaceState extends GameAppState implements DriverListener,
 			t.set(s.next());
 			drivers[i].configureGui(assetManager, windowSize);
 			drivers[i].warp(t.getTranslation(), t.getRotation());
+			Light[] lights = drivers[i].createHeadlights();
+			for (Light l : lights) scene.addLight(l);
 			drivers[i].addListener(this);
 		}
 		
@@ -211,6 +217,7 @@ public class RaceState extends GameAppState implements DriverListener,
 		v.getSpatial().setMaterial(assetManager.loadMaterial("Materials/red_car_material.j3m"));
 		d.setCamera(cam);
 		//d.setAccelForce(2000f);
+		d.createGameViewPort(renderManager, cam).attachScene(scene);
 		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
 		d.setViewSize(getViewSize(0, n));
 		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(), Functions.ARROW_KEYS);

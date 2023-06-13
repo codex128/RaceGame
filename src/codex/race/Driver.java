@@ -12,7 +12,6 @@ import com.jme3.bounding.BoundingBox;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.VehicleControl;
 import com.jme3.bullet.util.CollisionShapeFactory;
-import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
 import com.jme3.input.JoystickAxis;
 import com.jme3.input.JoystickButton;
@@ -23,6 +22,8 @@ import com.jme3.input.event.KeyInputEvent;
 import com.jme3.input.event.MouseButtonEvent;
 import com.jme3.input.event.MouseMotionEvent;
 import com.jme3.input.event.TouchEvent;
+import com.jme3.light.Light;
+import com.jme3.light.SpotLight;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Plane;
@@ -152,6 +153,7 @@ public class Driver implements RawInputListener, StateFunctionListener,
 		//gameCam.setFov(90f);
 		ViewPort vp = rm.createMainView(id+"-view", gameCam);
 		vp.setClearFlags(true, true, true);
+		vp.setBackgroundColor(Main.SKY_COLOR);
 		return vp;
 	}
 	public ViewPort createGuiViewPort(RenderManager rm, Camera base) {
@@ -170,6 +172,37 @@ public class Driver implements RawInputListener, StateFunctionListener,
 //		l.setLocalTranslation(300, 300, 0);
 //		l.setFontSize(50f);
 		return vp;
+	}
+	public void configureGui(AssetManager assets, Vector2f windowSize) {
+//		gearshift = (Node)assets.loadModel("Models/gear_panel.j3o");
+//		gearshift.setMaterial(assets.loadMaterial("Materials/gear_panel_material.j3m"));
+//		gearshift.setLocalTranslation(windowSize.x, 0f, 0f);
+//		float scale = 1f;
+//		gearshift.setLocalScale(scale, scale, -scale);
+//		gui.attachChild(gearshift);	
+		Label lapLabel = new Label("Lap 1/3");
+		lapLabel.setName("lap-counter");
+		lapLabel.setFontSize(30f);
+		lapLabel.setLocalTranslation(5f, windowSize.y-5f, 0f);
+		gui.attachChild(lapLabel);
+	}
+	public Light[] createHeadlights() {
+		if (car == null) return null;
+		SpotLight light = new SpotLight();
+		SpotLightNode n = new SpotLightNode(light);
+		n.setLocalTranslation(0f, 2f, -3f);
+		light.setColor(ColorRGBA.White);
+		light.setSpotRange(100f);
+		light.setSpotOuterAngle(FastMath.PI/2.1f);
+		light.setSpotInnerAngle(FastMath.PI/2.2f);
+		((Node)car.getSpatial()).attachChild(n);
+//		PointLight light = new PointLight();
+//		PointLightNode n = new PointLightNode(light);
+//		n.setLocalTranslation(0f, 2f, 0f);
+//		light.setRadius(1000f);
+//		light.setColor(ColorRGBA.White);
+//		((Node)car.getSpatial()).attachChild(n);
+		return new Light[] {light};
 	}
 	public void setViewSize(Vector4f size) {
 		viewSize = size;
@@ -226,19 +259,6 @@ public class Driver implements RawInputListener, StateFunctionListener,
 			return true;
 		}
 		return false;
-	}
-	public void configureGui(AssetManager assets, Vector2f windowSize) {
-//		gearshift = (Node)assets.loadModel("Models/gear_panel.j3o");
-//		gearshift.setMaterial(assets.loadMaterial("Materials/gear_panel_material.j3m"));
-//		gearshift.setLocalTranslation(windowSize.x, 0f, 0f);
-//		float scale = 1f;
-//		gearshift.setLocalScale(scale, scale, -scale);
-//		gui.attachChild(gearshift);	
-		Label lapLabel = new Label("Lap 1/3");
-		lapLabel.setName("lap-counter");
-		lapLabel.setFontSize(30f);
-		lapLabel.setLocalTranslation(5f, windowSize.y-5f, 0f);
-		gui.attachChild(lapLabel);
 	}
 	public void warp(Vector3f translation, Quaternion rotation) {
 		car.setPhysicsLocation(translation);

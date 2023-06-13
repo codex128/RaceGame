@@ -8,6 +8,7 @@ import codex.j3map.processors.StringProcessor;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AppState;
 import com.jme3.bullet.BulletAppState;
+import com.jme3.math.ColorRGBA;
 import com.jme3.renderer.RenderManager;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.GuiGlobals;
@@ -19,6 +20,7 @@ import com.simsilica.lemur.GuiGlobals;
  */
 public class Main extends SimpleApplication {
 	
+	public static final ColorRGBA SKY_COLOR = new ColorRGBA(.1f, .1f, .1f, 1f);
 	
 	
 	public Main() {
@@ -52,6 +54,9 @@ public class Main extends SimpleApplication {
 		
 		stateManager.attach(new GrandPrixState(
 				(J3map)assetManager.loadAsset("Properties/GrandPrix1.j3map")));
+		
+		viewPort.setBackgroundColor(SKY_COLOR);
+		viewPort.detachScene(rootNode);
 		
     }
     @Override
