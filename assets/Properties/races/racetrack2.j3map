@@ -1,0 +1,9 @@
+model: "Models/racetrack2.j3o";
+deathzone: -100f;
+laps: 3;
+music: {
+    source: "Sounds/music/determined_pursuit_loop.wav";
+    looping: true;
+    positional: false;
+    data_type: "stream";
+}

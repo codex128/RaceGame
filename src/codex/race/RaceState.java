@@ -7,6 +7,8 @@ package codex.race;
 import codex.j3map.J3map;
 import codex.jmeutil.Timer;
 import codex.jmeutil.TimerListener;
+import codex.jmeutil.audio.AudioModel;
+import codex.jmeutil.audio.SFXSpeaker;
 import codex.jmeutil.listen.Listenable;
 import codex.jmeutil.scene.SceneGraphIterator;
 import com.jme3.app.Application;
@@ -48,6 +50,7 @@ public class RaceState extends GameAppState implements DriverListener,
 	float deathzone;
 	int driversFinished = 0;
 	Timer afterward = new Timer(5f);
+	SFXSpeaker music;
 	
 	public RaceState() {}
 	public RaceState(J3map trackData, Player[] players) {
@@ -62,9 +65,9 @@ public class RaceState extends GameAppState implements DriverListener,
 	@Override
 	protected void init(Application app) {
 		rootNode.attachChild(scene);		
-		scene.addLight(new DirectionalLight(new Vector3f(0f, -1f, 0f), new ColorRGBA(.9f, .9f, .9f, .1f)));
-		scene.addLight(new DirectionalLight(new Vector3f(1f, -1f, 1f), ColorRGBA.DarkGray));
-		scene.addLight(new DirectionalLight(new Vector3f(-1f, -1f, -1f), ColorRGBA.DarkGray));
+		scene.addLight(new DirectionalLight(new Vector3f(0f, -1f, 0f), ColorRGBA.LightGray));
+		//scene.addLight(new DirectionalLight(new Vector3f(1f, -1f, 1f), ColorRGBA.DarkGray));
+		//scene.addLight(new DirectionalLight(new Vector3f(-1f, -1f, -1f), ColorRGBA.DarkGray));
 		if (trackData != null && players != null) {
 			load(trackData, players);
 			trackData = null;
@@ -94,6 +97,7 @@ public class RaceState extends GameAppState implements DriverListener,
 		drivers = null;
 		clearAllListeners();
 		afterward.clearAllListeners();
+		music.stop();
 	}
 	@Override
 	protected void onEnable() {}
@@ -151,6 +155,10 @@ public class RaceState extends GameAppState implements DriverListener,
 		
 		deathzone = trackData.getFloat("deathzone", -20f);
 		if (numLaps < 0) numLaps = trackData.getInteger("laps", 3);
+		
+		// music
+		music = new SFXSpeaker(assetManager, new AudioModel(trackData.getJ3map("music")));
+		music.play();
 		
 		ArrayList<Transform> starts = new ArrayList<>();
 		SceneGraphIterator it = new SceneGraphIterator(track);

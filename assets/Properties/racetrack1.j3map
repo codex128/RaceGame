@@ -1,3 +1,0 @@
-model: "Models/racetrack.j3o";
-deathzone: -20f;
-laps: 3;

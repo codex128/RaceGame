@@ -5,6 +5,8 @@
 package codex.race;
 
 import codex.j3map.J3map;
+import codex.jmeutil.audio.AudioModel;
+import codex.jmeutil.audio.SFXSpeaker;
 import com.jme3.app.Application;
 
 /**
@@ -25,7 +27,7 @@ public class GrandPrixState extends GameAppState implements RaceListener {
 	@Override
 	protected void init(Application app) {
 		
-		J3map commonCar = (J3map)assetManager.loadAsset("Properties/MyCar.j3map");
+		J3map commonCar = (J3map)assetManager.loadAsset("Properties/cars/MyCar.j3map");
 		players = new Player[]{new Player(0), /*new Player(1), /*new Player(2), /*new Player(3)*/};
 		for (Player p : players) {
 			p.setCarData(commonCar);
@@ -35,8 +37,6 @@ public class GrandPrixState extends GameAppState implements RaceListener {
 		index = data.getInteger("startIndex", 0);
 		forceLaps = data.getInteger("forceLaps", -1);
 		getStateManager().attach(createRace());
-		
-		System.out.println("force laps: "+forceLaps);
 		
 	}
 	@Override

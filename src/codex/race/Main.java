@@ -2,8 +2,10 @@ package codex.race;
 
 import codex.j3map.J3map;
 import codex.j3map.J3mapFactory;
+import codex.j3map.processors.BooleanProcessor;
 import codex.j3map.processors.FloatProcessor;
 import codex.j3map.processors.IntegerProcessor;
+import codex.j3map.processors.J3mapImporter;
 import codex.j3map.processors.StringProcessor;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AppState;
@@ -44,7 +46,11 @@ public class Main extends SimpleApplication {
 		
 		assetManager.registerLoader(J3mapFactory.class, "j3map");
 		J3mapFactory.registerAllProcessors(
-				StringProcessor.class, FloatProcessor.class, IntegerProcessor.class);
+				BooleanProcessor.class,
+				StringProcessor.class,
+				FloatProcessor.class,
+				IntegerProcessor.class);
+		J3mapFactory.registerProcessor(new J3mapImporter(assetManager));
 		
 		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
 		
@@ -53,10 +59,12 @@ public class Main extends SimpleApplication {
 		stateManager.attach(bulletapp);
 		
 		stateManager.attach(new GrandPrixState(
-				(J3map)assetManager.loadAsset("Properties/GrandPrix1.j3map")));
+				(J3map)assetManager.loadAsset("Properties/races/GrandPrix1.j3map")));
 		
+		// disable basic viewports
 		viewPort.setBackgroundColor(SKY_COLOR);
 		viewPort.detachScene(rootNode);
+		guiViewPort.detachScene(guiNode);
 		
     }
     @Override

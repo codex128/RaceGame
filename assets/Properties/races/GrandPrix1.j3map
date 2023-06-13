@@ -1,0 +1,8 @@
+name: "GrandPrix1";
+length: 4;
+//startIndex: 2;
+forceLaps: 1;
+race0: "Properties/races/racetrack1.j3map";
+race1: "Properties/races/racetrack2.j3map";
+race2: "Properties/races/racetrack3.j3map";
+race3: "Properties/races/looptrack.j3map";

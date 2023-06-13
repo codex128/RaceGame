@@ -1,0 +1,9 @@
+model: "Models/racetrack3.j3o";
+deathzone: -40f;
+laps: 5;
+music: {
+    source: "Sounds/music/Black-Diamond.wav";
+    looping: true;
+    positional: false;
+    data_type: "stream";
+}

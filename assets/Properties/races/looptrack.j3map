@@ -1,0 +1,9 @@
+model: "Models/looptrack.j3o";
+deathzone: -130f;
+laps: 3;
+music: {
+    source: "Sounds/music/hot_roadway_bpm160.wav";
+    looping: true;
+    positional: false;
+    data_type: "stream";
+}

@@ -1,0 +1,9 @@
+model: "Models/racetrack.j3o";
+deathzone: -20f;
+laps: 3;
+music: {
+    source: "Sounds/music/S31-Winning-the-Race.wav";
+    looping: true;
+    positional: false;
+    data_type: "stream";
+}

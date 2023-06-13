@@ -1,0 +1,8 @@
+source: "Sounds/music/unstoppable_driver_loop_remastered.wav";
+volume: 1f;
+pitch: 1f;
+looping: true;
+positional: false;
+directional: false;
+reverb: false;
+data_type: "stream";
