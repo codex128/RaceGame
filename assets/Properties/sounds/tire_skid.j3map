@@ -1,0 +1,7 @@
+source: "Sounds/tires_squal_loop.ogg";
+volume: 1f;
+looping: true;
+positional: true;
+directional: false;
+reverb: false;
+data_type: "buffer";

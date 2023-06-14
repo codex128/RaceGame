@@ -1,6 +1,14 @@
-source: "Sounds/Gun.wav";
-volume: 1.5f;
-pitch: 1f;
-positional: false;
-looping: false;
-data_type: "stream";
+start_race: {
+    source: "Sounds/start_race.ogg";
+    volume: 1f;
+    positional: false;
+    looping: false;
+    data_type: "buffer";
+}
+countdown: {
+    source: "Sounds/pre_start_race.ogg";
+    volume: 1f;
+    positional: false;
+    looping: false;
+    data_type: "buffer";
+}

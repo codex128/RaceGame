@@ -7,8 +7,6 @@ import codex.j3map.processors.FloatProcessor;
 import codex.j3map.processors.IntegerProcessor;
 import codex.j3map.processors.J3mapImporter;
 import codex.j3map.processors.StringProcessor;
-import codex.jmeutil.assets.AssetCacheState;
-import codex.jmeutil.assets.AssetProcessor;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AppState;
 import com.jme3.bullet.BulletAppState;
@@ -49,9 +47,7 @@ public class Main extends SimpleApplication {
 		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
 		
 		BulletAppState bulletapp = new BulletAppState();
-        AssetCacheState assetCache = new AssetCacheState();
-		//bulletapp.setDebugEnabled(true);
-		stateManager.attachAll(bulletapp, assetCache);		
+		stateManager.attachAll(bulletapp, new MultiplayerSoundState());		
         
 		assetManager.registerLoader(J3mapFactory.class, "j3map");
 		J3mapFactory.registerAllProcessors(

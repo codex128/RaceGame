@@ -5,12 +5,15 @@
 package codex.race;
 
 import codex.j3map.J3map;
+import codex.jmeutil.audio.SFXSpeaker;
 import codex.jmeutil.listen.Listenable;
 import codex.jmeutil.scene.SceneGraphIterator;
 import com.jme3.asset.AssetManager;
+import com.jme3.audio.Listener;
 import com.jme3.bounding.BoundingBox;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.VehicleControl;
+import com.jme3.bullet.objects.VehicleWheel;
 import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.collision.CollisionResults;
 import com.jme3.input.JoystickAxis;
@@ -44,9 +47,9 @@ import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
 import com.simsilica.lemur.input.StateFunctionListener;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -65,7 +68,7 @@ public class Driver implements RawInputListener, StateFunctionListener,
 	Node gui;
 	Vector4f viewSize;
 	DriverFunctionSet functions;
-	MultiplayerAudioMap audio;
+	MultiplayerSoundState mss;
 	float baseAccelForce = 12000f;
 	float steerAngle = .5f;
 	int accelDirection = 0;
@@ -141,11 +144,6 @@ public class Driver implements RawInputListener, StateFunctionListener,
         car.addWheel(wheel_bl.getParent(), box.getCenter().add(0, -back_wheel_h, 0),
                 wheelDirection, wheelAxle, 0.2f, wheelRadius, false);
 		
-		//vehicle.getWheel(0).setFrictionSlip(4);
-		//vehicle.getWheel(1).setFrictionSlip(4);
-        //car.getWheel(2).setFrictionSlip(10);
-        //car.getWheel(3).setFrictionSlip(10);
-		
 		return car;
 	}
 	public ViewPort createGameViewPort(RenderManager rm, Camera base) {
@@ -204,6 +202,9 @@ public class Driver implements RawInputListener, StateFunctionListener,
 //		((Node)car.getSpatial()).attachChild(n);
 		return new Light[] {light};
 	}
+    public void configureAudio(MultiplayerSoundState mss) {
+        this.mss = mss;
+    }
 	public void setViewSize(Vector4f size) {
 		viewSize = size;
 		gameCam.setViewPort(size.x, size.y, size.z, size.w);
@@ -215,11 +216,6 @@ public class Driver implements RawInputListener, StateFunctionListener,
 	public void setCamera(Camera cam) {
 		this.gameCam = cam;
 	}
-	public void setAudio(MultiplayerAudioMap audio) {
-		if (this.audio != null) this.audio.removeVoter(this);
-		this.audio = audio;
-		if (this.audio != null) this.audio.registerVoter(this);
-	}
 	public void setBaseAccelForce(float accel) {
 		baseAccelForce = accel;
 	}
@@ -229,13 +225,19 @@ public class Driver implements RawInputListener, StateFunctionListener,
 		gameCam.setLocation(car.getPhysicsLocation().add(car.getPhysicsRotation().mult(new Vector3f(0f, 2f, 0f))));
 		Quaternion tilted = new Quaternion().lookAt(car.getPhysicsRotation().mult(new Vector3f(0f, 0f, -1f)), FastMath.interpolateLinear(.5f, Vector3f.UNIT_Y, car.getPhysicsRotation().mult(Vector3f.UNIT_Y)));
 		gameCam.setRotation(tilted);
+//        if (detectWheelSkid()) {
+//            if (!tireSkid.isPlaying()) mss.startEmittingSound("skid", this);
+//        }
+//        else if (tireSkid.isPlaying()) {
+//            mss.stopEmittingSound("skid", this);
+//        }
 	}
 	public void updateNodeStates(float tpf) {
 		gui.updateLogicalState(tpf);
 		gui.updateGeometricState();
 	}
 	
-	public boolean detectLapTriggers(ArrayList<LapTrigger> triggers, int laps) {
+	public boolean detectLapTriggers(List<LapTrigger> triggers, int laps) {
 		if (finished) return false;
 		Spatial spatial = triggers.get(nextTrigger).getSpatial();
 		Ray ray = new Ray(car.getPhysicsLocation(), VIEW_PLANE.getClosestPoint(car.getPhysicsRotation().getRotationColumn(2)).negateLocal());
@@ -266,10 +268,27 @@ public class Driver implements RawInputListener, StateFunctionListener,
 		car.setLinearVelocity(Vector3f.ZERO);
 		car.setAngularVelocity(Vector3f.ZERO);
 	}
+    
 	private void applyAcceleration() {
 		//car.accelerate(-(baseAccelForce+gearFactor*viewNum)*accelDirection);
 		car.accelerate(-baseAccelForce*accelDirection);
 	}
+    private boolean detectWheelSkid() {
+        final float minSkidVelocity = 5f;
+        if (car.getLinearVelocity().lengthSquared() < minSkidVelocity*minSkidVelocity) {
+            return false;
+        }
+        final float skidAngleThreshold = FastMath.PI*0.25f;
+        for (int i = 0; i < car.getNumWheels(); i++) {
+            VehicleWheel wheel = car.getWheel(i);
+            if (wheel.getCollisionLocation() == null) continue;
+            float angle = car.getController().getForwardVector(new Vector3f()).angleBetween(car.getLinearVelocity());
+            if (Math.abs(FastMath.HALF_PI-angle) < skidAngleThreshold) {
+                return true;
+            }
+        }
+        return false;
+    }
 	
 	public void cleanupViewPorts(RenderManager rm) {
 		rm.removeMainView(id+"-view");
