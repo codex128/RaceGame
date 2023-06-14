@@ -7,6 +7,8 @@ import codex.j3map.processors.FloatProcessor;
 import codex.j3map.processors.IntegerProcessor;
 import codex.j3map.processors.J3mapImporter;
 import codex.j3map.processors.StringProcessor;
+import codex.jmeutil.assets.AssetCacheState;
+import codex.jmeutil.assets.AssetProcessor;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AppState;
 import com.jme3.bullet.BulletAppState;
@@ -23,7 +25,7 @@ import com.simsilica.lemur.GuiGlobals;
 public class Main extends SimpleApplication {
 	
 	public static final ColorRGBA SKY_COLOR = new ColorRGBA(.1f, .1f, .1f, 1f);
-	
+    
 	
 	public Main() {
 		super((AppState) null);
@@ -44,20 +46,22 @@ public class Main extends SimpleApplication {
 		GuiGlobals.getInstance().setCursorEventsEnabled(false);
 		Functions.initialize(GuiGlobals.getInstance().getInputMapper());
 		
+		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
+		
+		BulletAppState bulletapp = new BulletAppState();
+        AssetCacheState assetCache = new AssetCacheState();
+		//bulletapp.setDebugEnabled(true);
+		stateManager.attachAll(bulletapp, assetCache);		
+        
 		assetManager.registerLoader(J3mapFactory.class, "j3map");
 		J3mapFactory.registerAllProcessors(
 				BooleanProcessor.class,
 				StringProcessor.class,
 				FloatProcessor.class,
 				IntegerProcessor.class);
-		J3mapFactory.registerProcessor(new J3mapImporter(assetManager));
-		
-		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
-		
-		BulletAppState bulletapp = new BulletAppState();
-		//bulletapp.setDebugEnabled(true);
-		stateManager.attach(bulletapp);
-		
+		J3mapFactory.registerAllProcessors(
+                new J3mapImporter(assetManager));
+        
 		stateManager.attach(new GrandPrixState(
 				(J3map)assetManager.loadAsset("Properties/races/GrandPrix1.j3map")));
 		

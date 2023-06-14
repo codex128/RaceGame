@@ -1,0 +1,6 @@
+source: "Sounds/Gun.wav";
+volume: 1.5f;
+pitch: 1f;
+positional: false;
+looping: false;
+data_type: "stream";

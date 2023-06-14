@@ -4,6 +4,7 @@
  */
 package codex.race;
 
+import codex.jmeutil.assets.AssetCacheState;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.BaseAppState;

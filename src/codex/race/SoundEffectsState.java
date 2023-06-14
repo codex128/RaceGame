@@ -19,9 +19,7 @@ public class SoundEffectsState extends GameAppState {
 	@Override
 	protected void onEnable() {}
 	@Override
-	protected void onDisable() {}
-	
-	
+	protected void onDisable() {}	
 	
 	
 }

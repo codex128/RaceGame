@@ -49,8 +49,10 @@ public class RaceState extends GameAppState implements DriverListener,
 	int numLaps = -1;
 	float deathzone;
 	int driversFinished = 0;
+    Timer countdown = new Timer(3f);
 	Timer afterward = new Timer(5f);
 	SFXSpeaker music;
+    SFXSpeaker raceStart;
 	
 	public RaceState() {}
 	public RaceState(J3map trackData, Player[] players) {
@@ -73,9 +75,12 @@ public class RaceState extends GameAppState implements DriverListener,
 			trackData = null;
 			players = null;
 		}
+        countdown.setCycleMode(Timer.CycleMode.ONCE);
+        countdown.addListener(this);
 		afterward.setCycleMode(Timer.CycleMode.ONCE);
 		afterward.addListener(this);
-	}
+        raceStart = new SFXSpeaker(assetManager, new AudioModel((J3map)assetManager.loadAsset("Properties/sounds/start_race.j3map")));
+    }
 	@Override
 	protected void cleanup(Application app) {
 		scene.removeFromParent();
@@ -115,6 +120,7 @@ public class RaceState extends GameAppState implements DriverListener,
 			}
 			d.updateNodeStates(tpf);
 		}
+        countdown.update(tpf);
 		afterward.update(tpf);
 	}
 	@Override
@@ -126,15 +132,21 @@ public class RaceState extends GameAppState implements DriverListener,
 		label.setColor(ColorRGBA.White);
 		label.setLocalTranslation(windowSize.x/2f, windowSize.y/2f, 0f);
 		if (driversFinished == drivers.length
-				|| (drivers.length >= 3 && driversFinished >= drivers.length-1)) {
+				|| (drivers.length >= 2 && driversFinished >= drivers.length-1)) {
 			System.out.println("start afterward timer");
 			afterward.start();
 		}
 	}
 	@Override
 	public void onTimerFinish(Timer timer) {
-		if (timer == afterward) {
-			System.out.println("timer finished: notify listeners");
+        if (timer == countdown) {
+            raceStart.play();
+            for (Driver d : drivers) {
+                d.getVehicle().setLinearFactor(Vector3f.UNIT_XYZ);
+                d.getVehicle().setAngularFactor(Vector3f.UNIT_XYZ);
+            }
+        }
+        else if (timer == afterward) {
 			notifyListeners(l -> l.onRaceComplete(this));
 		}
 	}
@@ -209,6 +221,8 @@ public class RaceState extends GameAppState implements DriverListener,
 		for (int i = 0; i < drivers.length && s.hasNext(); i++) {
 			scene.attachChild(drivers[i].getVehicle().getSpatial());
 			getPhysicsSpace().add(drivers[i].getVehicle());
+            drivers[i].getVehicle().setLinearFactor(Vector3f.UNIT_Y);
+            drivers[i].getVehicle().setAngularFactor(new Vector3f(.5f, 0f, .5f));
 			t.set(s.next());
 			drivers[i].configureGui(assetManager, windowSize);
 			drivers[i].warp(t.getTranslation(), t.getRotation());
@@ -216,6 +230,8 @@ public class RaceState extends GameAppState implements DriverListener,
 			for (Light l : lights) scene.addLight(l);
 			drivers[i].addListener(this);
 		}
+        
+        countdown.start();
 		
 	}
 	
