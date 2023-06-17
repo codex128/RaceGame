@@ -13,10 +13,10 @@ import com.simsilica.lemur.input.InputMapper;
  */
 public class Functions {
 	
-	public static final DriverFunctionSet
-			ARROW_KEYS = new DriverFunctionSet("arrow-keys"),
-			WASD = new DriverFunctionSet("wasd"),
-			IJKL = new DriverFunctionSet("ijkl");
+	public static final DriverInputScheme
+			ARROW_KEYS = new DriverInputScheme("arrow-keys"),
+			WASD = new DriverInputScheme("wasd"),
+			IJKL = new DriverInputScheme("ijkl");
 	
 	public static void initialize(InputMapper im) {
 		ARROW_KEYS.initialize(im, KeyInput.KEY_UP, KeyInput.KEY_DOWN,

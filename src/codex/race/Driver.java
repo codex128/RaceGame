@@ -56,7 +56,7 @@ import java.util.List;
  * @author gary
  */
 public class Driver implements RawInputListener, StateFunctionListener,
-		Listenable<DriverListener>, SoundTrigger {
+		Listenable<DriverListener> {
 	
 	private static final Plane VIEW_PLANE = new Plane(Vector3f.UNIT_Y, Vector3f.ZERO);
 	
@@ -67,8 +67,7 @@ public class Driver implements RawInputListener, StateFunctionListener,
 	Camera guiCam;
 	Node gui;
 	Vector4f viewSize;
-	DriverFunctionSet functions;
-	MultiplayerSoundState mss;
+	DriverInputScheme functions;
 	float baseAccelForce = 12000f;
 	float steerAngle = .5f;
 	int accelDirection = 0;
@@ -202,9 +201,6 @@ public class Driver implements RawInputListener, StateFunctionListener,
 //		((Node)car.getSpatial()).attachChild(n);
 		return new Light[] {light};
 	}
-    public void configureAudio(MultiplayerSoundState mss) {
-        this.mss = mss;
-    }
 	public void setViewSize(Vector4f size) {
 		viewSize = size;
 		gameCam.setViewPort(size.x, size.y, size.z, size.w);
@@ -324,7 +320,7 @@ public class Driver implements RawInputListener, StateFunctionListener,
 		return listeners;
 	}
 	
-	public void initializeInputs(InputMapper im, DriverFunctionSet functions) {
+	public void initializeInputs(InputMapper im, DriverInputScheme functions) {
 		this.functions = functions;
 		im.addStateListener(this, functions.getFunctions());
 		functions.activateGroup(im, true);

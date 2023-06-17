@@ -12,12 +12,12 @@ import com.simsilica.lemur.input.InputState;
  *
  * @author gary
  */
-public class DriverFunctionSet {
+public class DriverInputScheme {
 	
 	private final String id;
 	private final FunctionId drive, steer, flip;
 	
-	public DriverFunctionSet(String id) {
+	public DriverInputScheme(String id) {
 		this.id = id;
 		drive = new FunctionId(id, "drive");
 		steer = new FunctionId(id, "steer");

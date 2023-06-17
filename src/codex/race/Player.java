@@ -14,6 +14,7 @@ public class Player {
 	
 	int pnum;
 	J3map carData;
+    DriverInputScheme inputScheme;
 	
 	public Player(int pnum) {
 		this.pnum = pnum;
@@ -22,6 +23,9 @@ public class Player {
 	public void setCarData(J3map carData) {
 		this.carData = carData;
 	}
+    public void setInputScheme(DriverInputScheme scheme) {
+        inputScheme = scheme;
+    }
 	
 	public int getPlayerNumber() {
 		return pnum;
