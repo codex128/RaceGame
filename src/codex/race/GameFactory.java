@@ -31,7 +31,7 @@ public class GameFactory extends GameAppState {
     public Spatial createCarModel(J3map carData, String color) {
         Spatial model = assetManager.loadModel(carData.getString("model"));
         Material mat = assetManager.loadMaterial(carData.getString("material"));
-        Texture tex = assetManager.loadTexture(new TextureKey(carData.getString("texture").replace((CharSequence)"$", color)));
+        Texture tex = assetManager.loadTexture(new TextureKey(carData.getString("texture").replace((CharSequence)"$", color), false));
         mat.setTexture("DiffuseMap", tex);
         model.setMaterial(mat);
         return model;

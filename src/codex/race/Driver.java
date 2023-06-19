@@ -56,7 +56,6 @@ public class Driver implements
 	Camera guiCam;
 	Node gui;
 	ViewWindow window;
-	DriverInputScheme functions;
 	float baseAccelForce = 12000f;
 	float steerAngle = .5f;
 	int accelDirection = 0;
@@ -303,12 +302,11 @@ public class Driver implements
 	@Override
 	public void valueChanged(FunctionId func, InputState value, double tpf) {
 		if (finished) return;
-		if (func == functions.getDrive()) {
+		if (func == player.getInputScheme().getDrive()) {
 			accelDirection = value.asNumber();
 			applyAcceleration();
-			//audio.get("engine").castVote(this, value != InputState.Off);
 		}
-		else if (func == functions.getSteer()) {
+		else if (func == player.getInputScheme().getSteer()) {
 			if (value != InputState.Off) {
 				car.steer(-steerAngle*value.asNumber());
 			}
@@ -316,7 +314,7 @@ public class Driver implements
 				car.steer(0f);
 			}
 		}
-		else if (func == functions.getFlip() && value != InputState.Off) {
+		else if (func == player.getInputScheme().getFlip() && value != InputState.Off) {
 			car.setAngularVelocity(car.getPhysicsRotation().getRotationColumn(2).negateLocal().multLocal(5f));
 		}
 	}

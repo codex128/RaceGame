@@ -9,6 +9,7 @@ import com.jme3.app.Application;
 import java.util.List;
 import codex.race.config.ConfigClient;
 import codex.race.config.ConfigState;
+import java.util.LinkedList;
 
 /**
  *
@@ -16,6 +17,8 @@ import codex.race.config.ConfigState;
  */
 public class GrandPrixState extends GameAppState implements RaceListener, ConfigClient {
 	
+    private static final int NUM_PLAYERS = 3;
+    
 	J3map data;
 	int index;
 	List<Player> players;
@@ -29,7 +32,22 @@ public class GrandPrixState extends GameAppState implements RaceListener, Config
 	@Override
 	protected void init(Application app) {
         
-        //getStateManager().attach(createRace());
+        // manually initialize players
+        players = new LinkedList<>();
+        J3map commonCar = (J3map)assetManager.loadAsset("Properties/cars/MyCar.j3map");
+        for (int i = 0; i < NUM_PLAYERS; i++) {
+            Player p = new Player(i);
+            p.setViewPortNumber(i);
+            p.setCarData(commonCar);
+            p.setInputScheme(Functions.SCHEMES[i]);
+            p.setCarColor(GameFactory.COLORS[i]);
+            players.add(p);
+        }        
+        
+		index = data.getInteger("startIndex", 0);
+		forceLaps = data.getInteger("forceLaps", -1);
+        
+        getStateManager().attach(createRace());
 		
 	}
 	@Override
@@ -62,12 +80,16 @@ public class GrandPrixState extends GameAppState implements RaceListener, Config
 	private RaceState createRace() {
 		String r = data.getString("race"+(index++));
 		if (r == null) return null;
-		RaceState race = new RaceState(forceLaps);
+		RaceState race = new RaceState(constructRaceModel(r));
 		race.addListener(this);
-        getApplication().enqueue(() -> {
-            race.load((J3map)assetManager.loadAsset(r), players);
-        });
 		return race;
 	}
+    private RaceModel constructRaceModel(String source) {
+        RaceModel m = new RaceModel();
+        m.setTrackData((J3map)assetManager.loadAsset(source));
+        m.setPlayers(players);
+        m.setForcedLaps(forceLaps);
+        return m;
+    }
 	
 }

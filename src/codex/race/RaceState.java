@@ -45,9 +45,8 @@ import java.util.List;
 public class RaceState extends GameAppState implements DriverListener,
 		Listenable<RaceListener>, TimerListener, SpeakerListener {
 	
+    RaceModel model;
 	Node scene = new Node("race-scene");
-	J3map trackData;
-	Player[] players;
 	Spatial track;
 	ArrayList<LapTrigger> triggers = new ArrayList<>();
 	LinkedList<RaceListener> listeners = new LinkedList<>();
@@ -62,10 +61,9 @@ public class RaceState extends GameAppState implements DriverListener,
     SFXSpeaker introAudio;
     SequencedSpeaker victoryAudio;
 	
-	public RaceState() {}
-	public RaceState(int laps) {
-		numLaps = laps;
-	}
+	public RaceState(RaceModel model) {
+        this.model = model;
+    }
 	
 	@Override
 	protected void init(Application app) {
@@ -73,6 +71,7 @@ public class RaceState extends GameAppState implements DriverListener,
 		scene.addLight(new DirectionalLight(new Vector3f(0f, -1f, 0f), ColorRGBA.LightGray));
         initTimers();
         initAudio();
+        load();
     }
 	@Override
 	protected void cleanup(Application app) {
@@ -137,18 +136,20 @@ public class RaceState extends GameAppState implements DriverListener,
 				|| (drivers.length >= 2 && driversFinished >= drivers.length-1)) {
 			afterward.start();
 		}
-        music[0].stop();
-        music[1].stop();
-        victoryAudio.play();
+        if (driversFinished == 1) {
+            music[0].stop();
+            music[1].stop();
+            victoryAudio.play();
+        }
 	}
     @Override
     public void onLapFinish(Driver driver) {
-        if (driver.getLapNumber() == numLaps) {
+        if (driversFinished == 0 && driver.getLapNumber() == numLaps) {
             music[0].stop();
             lapAudio[1].play();
         }
         else {
-            lapAudio[0].play();
+            lapAudio[0].playInstance();
         }
     }
 	@Override
@@ -215,20 +216,20 @@ public class RaceState extends GameAppState implements DriverListener,
                 new SFXSpeaker(assetManager, new AudioModel(vic.getJ3map("loop"))));
     }
     
-	public void load(J3map trackData, List<Player> players) {
-		assert players.size() >= 1 && players.size() <= 4;
+	private void load() {
+		assert model.getPlayers().size() >= 1 && model.getPlayers().size() <= 4;
 		
-		track = assetManager.loadModel(trackData.getString("model"));
-		//track.setMaterial(assetManager.loadMaterial("Materials/track_material.j3m"));
+		track = assetManager.loadModel(model.getTrackData().getString("model"));
 		scene.attachChild(track);
 		
-		deadzone = trackData.getFloat("deathzone", trackData.getFloat("deadzone", -20f));
-		if (numLaps < 0) numLaps = trackData.getInteger("laps", 3);
+		deadzone = model.getTrackData().getFloat("deathzone", model.getTrackData().getFloat("deadzone", -20f));
+		if (!model.isForcingLaps()) numLaps = model.getTrackData().getInteger("laps", 3);
+        else numLaps = model.getForcedLaps();
 		
 		// music
-		music[0] = new SFXSpeaker(assetManager, new AudioModel(trackData.getJ3map("music")));
-        if (trackData.propertyExists("fast_music")) {
-            music[1] = new SFXSpeaker(assetManager, new AudioModel(trackData.getJ3map("fast_music")));
+		music[0] = new SFXSpeaker(assetManager, new AudioModel(model.getTrackData().getJ3map("music")));
+        if (model.getTrackData().propertyExists("fast_music")) {
+            music[1] = new SFXSpeaker(assetManager, new AudioModel(model.getTrackData().getJ3map("fast_music")));
         }
         else {
             music[1] = new SFXSpeaker(assetManager, music[0].getModel());
@@ -267,11 +268,11 @@ public class RaceState extends GameAppState implements DriverListener,
 			}
 		}
 		
-		drivers = new Driver[players.size()];		
+		drivers = new Driver[model.getPlayers().size()];
 		Iterator<Transform> s = starts.iterator();
 		Transform t = new Transform();
 		for (int i = 0; i < drivers.length && s.hasNext(); i++) {
-            Driver d = drivers[i] = new Driver(players.get(i));
+            Driver d = drivers[i] = new Driver(model.getPlayers().get(i));
             d.createVehicle(factory);
             d.createGameViewPort(renderManager, cam).attachScene(scene);
             d.createGuiViewPort(renderManager, guiViewPort.getCamera());
@@ -290,6 +291,13 @@ public class RaceState extends GameAppState implements DriverListener,
 		}
 		
 	}
+    
+    public RaceModel getModel() {
+        return model;
+    }
+    public int getDriversFinished() {
+        return driversFinished;
+    }
 	
 	private static String getNumberSuffix(int n) {
 		switch (n) {
