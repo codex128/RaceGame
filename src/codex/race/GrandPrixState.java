@@ -5,38 +5,36 @@
 package codex.race;
 
 import codex.j3map.J3map;
-import codex.jmeutil.audio.AudioModel;
-import codex.jmeutil.audio.SFXSpeaker;
+import codex.race.config.PlayerConfigState;
 import com.jme3.app.Application;
+import java.util.List;
+import codex.race.config.ConfigClient;
+import codex.race.config.ConfigClientState;
+import codex.race.config.ConfigState;
+import codex.race.config.RaceSelectionState;
 
 /**
  *
  * @author gary
  */
-public class GrandPrixState extends GameAppState implements RaceListener {
+public class GrandPrixState extends ConfigClientState implements RaceListener, ConfigClient {
 	
 	J3map data;
 	int index;
-	Player[] players;
+	List<Player> players;
 	int forceLaps;
 	
-	public GrandPrixState(J3map data) {
-		this.data = data;
+	public GrandPrixState() {
+		super(new PlayerConfigState(4), new RaceSelectionState(false));
 	}
 	
 	@Override
 	protected void init(Application app) {
 		
-		J3map commonCar = (J3map)assetManager.loadAsset("Properties/cars/MyCar.j3map");
-		players = new Player[]{new Player(0), /*new Player(1), /*new Player(2), /*new Player(3)*/};
-		for (Player p : players) {
-			p.setCarData(commonCar);
-		}
+        super.init(app);
 		
-		//grandprix = (J3map)assetManager.loadAsset("Properties/GrandPrix1.j3map");
 		index = data.getInteger("startIndex", 0);
 		forceLaps = data.getInteger("forceLaps", -1);
-		getStateManager().attach(createRace());
 		
 	}
 	@Override
@@ -53,12 +51,27 @@ public class GrandPrixState extends GameAppState implements RaceListener {
 			getStateManager().attach(createRace());
 		});
 	}
+    @Override
+    public void recieveConfiguredPlayers(List<Player> players) {
+        this.players = players;
+    }
+    @Override
+    public void recieveSelectedRaceData(J3map raceData) {
+        data = raceData;
+    }
+    @Override
+    public void allConfigsComplete() {
+        getStateManager().attach(createRace());
+    }
 	
 	private RaceState createRace() {
 		String r = data.getString("race"+(index++));
 		if (r == null) return null;
-		RaceState race = new RaceState((J3map)assetManager.loadAsset(r), players, forceLaps);
+		RaceState race = new RaceState(forceLaps);
 		race.addListener(this);
+        getApplication().enqueue(() -> {
+            race.load((J3map)assetManager.loadAsset(r), players);
+        });
 		return race;
 	}
 	

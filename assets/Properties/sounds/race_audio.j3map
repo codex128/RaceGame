@@ -1,0 +1,29 @@
+intro: {
+    source: "Sounds/Gun.wav";
+}
+countdown: {
+    minor: {
+        source: "Sounds/countdown-a.ogg";
+    }
+    major: {
+        source: "Sounds/countdown-b.ogg";
+    }
+}
+lap: {
+    minor: {
+        source: "Sounds/point_bell.wav";
+    }
+    major: {
+        source: "Sounds/Gun.wav";
+    }
+}
+victory: {
+    intro: {
+        source: "Sounds/Gun.wav";
+    }
+    loop: {
+        source: "Sounds/music/UrbanTheme.wav";
+        loop: true;
+        data_type: "stream";
+    }
+}

@@ -17,6 +17,8 @@ public class Functions {
 			ARROW_KEYS = new DriverInputScheme("arrow-keys"),
 			WASD = new DriverInputScheme("wasd"),
 			IJKL = new DriverInputScheme("ijkl");
+    public static final DriverInputScheme[]
+            SCHEMES = {ARROW_KEYS, WASD, IJKL};
 	
 	public static void initialize(InputMapper im) {
 		ARROW_KEYS.initialize(im, KeyInput.KEY_UP, KeyInput.KEY_DOWN,

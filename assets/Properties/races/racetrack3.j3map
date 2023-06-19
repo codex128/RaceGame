@@ -2,8 +2,13 @@ model: "Models/racetrack3.j3o";
 deathzone: -40f;
 laps: 5;
 music: {
-    source: "Sounds/music/Black-Diamond.wav";
+    source: "Sounds/music/racing tecno_v2.5.ogg";
     looping: true;
-    positional: false;
+    data_type: "stream";
+}
+fast_music: {
+    source: "Sounds/music/racing tecno_v2.5.ogg";
+    pitch 1.1f;
+    looping: true;
     data_type: "stream";
 }

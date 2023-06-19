@@ -5,26 +5,14 @@
 package codex.race;
 
 import codex.j3map.J3map;
-import codex.jmeutil.audio.SFXSpeaker;
 import codex.jmeutil.listen.Listenable;
 import codex.jmeutil.scene.SceneGraphIterator;
 import com.jme3.asset.AssetManager;
-import com.jme3.audio.Listener;
 import com.jme3.bounding.BoundingBox;
 import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.VehicleControl;
-import com.jme3.bullet.objects.VehicleWheel;
 import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.collision.CollisionResults;
-import com.jme3.input.JoystickAxis;
-import com.jme3.input.JoystickButton;
-import com.jme3.input.RawInputListener;
-import com.jme3.input.event.JoyAxisEvent;
-import com.jme3.input.event.JoyButtonEvent;
-import com.jme3.input.event.KeyInputEvent;
-import com.jme3.input.event.MouseButtonEvent;
-import com.jme3.input.event.MouseMotionEvent;
-import com.jme3.input.event.TouchEvent;
 import com.jme3.light.Light;
 import com.jme3.light.SpotLight;
 import com.jme3.math.ColorRGBA;
@@ -43,6 +31,7 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.simsilica.lemur.Label;
+import com.simsilica.lemur.input.AnalogFunctionListener;
 import com.simsilica.lemur.input.FunctionId;
 import com.simsilica.lemur.input.InputMapper;
 import com.simsilica.lemur.input.InputState;
@@ -55,8 +44,8 @@ import java.util.List;
  *
  * @author gary
  */
-public class Driver implements RawInputListener, StateFunctionListener,
-		Listenable<DriverListener> {
+public class Driver implements
+        AnalogFunctionListener, StateFunctionListener, Listenable<DriverListener> {
 	
 	private static final Plane VIEW_PLANE = new Plane(Vector3f.UNIT_Y, Vector3f.ZERO);
 	
@@ -78,22 +67,20 @@ public class Driver implements RawInputListener, StateFunctionListener,
 	
 	public Driver(Player player) {
 		this.player = player;
-		id = "p"+player.getPlayerNumber();
+		id = "p"+player.getId();
 		baseAccelForce = player.getCarData().getFloat("accelleration", 12000f);
 		steerAngle = player.getCarData().getFloat("steeringAngle", .5f);
 	}
 	
-	public VehicleControl createVehicle(AssetManager assets) {
-		return createVehicle(assets.loadModel(player.getCarData().getString("model")));
-	}
-	public VehicleControl createVehicle(Spatial model) {
+	public VehicleControl createVehicle(GameFactory factory) {
 		J3map suspension = player.getCarData().getJ3map("suspension");
 		float stiffness = suspension.getFloat("stiffness", 120f);
         float compValue = suspension.getFloat("compression", .2f);
         float dampValue = suspension.getFloat("damping", .3f);
         final float mass = player.getCarData().getFloat("mass", 200f);
-
+        
         //Load model and get chassis Geometry
+        Spatial model = factory.createCarModel(suspension, player.getCarColor());
         Geometry chasis = getChildGeometry(model, "Car");
         BoundingBox box = (BoundingBox)chasis.getModelBound();
 
@@ -183,6 +170,10 @@ public class Driver implements RawInputListener, StateFunctionListener,
 		lapLabel.setLocalTranslation(5f, windowSize.y-5f, 0f);
 		gui.attachChild(lapLabel);
 	}
+    public void configureInputs(InputMapper im) {
+        player.getInputScheme().addListeners(im, this, this);
+		player.getInputScheme().activateGroup(im, true);
+	}
 	public Light[] createHeadlights() {
 		if (car == null) return null;
 		SpotLight light = new SpotLight();
@@ -231,8 +222,7 @@ public class Driver implements RawInputListener, StateFunctionListener,
 	public void updateNodeStates(float tpf) {
 		gui.updateLogicalState(tpf);
 		gui.updateGeometricState();
-	}
-	
+	}	
 	public boolean detectLapTriggers(List<LapTrigger> triggers, int laps) {
 		if (finished) return false;
 		Spatial spatial = triggers.get(nextTrigger).getSpatial();
@@ -250,6 +240,9 @@ public class Driver implements RawInputListener, StateFunctionListener,
 					finished = true;
 					notifyListeners(l -> l.onDriverFinish(this));
 				}
+                else {
+                    notifyListeners(l -> l.onLapFinish(this));                    
+                }
 			}
 			if (++nextTrigger >= triggers.size()) {
 				nextTrigger = 0;
@@ -263,32 +256,19 @@ public class Driver implements RawInputListener, StateFunctionListener,
 		car.setPhysicsRotation(rotation);
 		car.setLinearVelocity(Vector3f.ZERO);
 		car.setAngularVelocity(Vector3f.ZERO);
-	}
-    
+	}    
 	private void applyAcceleration() {
 		//car.accelerate(-(baseAccelForce+gearFactor*viewNum)*accelDirection);
 		car.accelerate(-baseAccelForce*accelDirection);
 	}
-    private boolean detectWheelSkid() {
-        final float minSkidVelocity = 5f;
-        if (car.getLinearVelocity().lengthSquared() < minSkidVelocity*minSkidVelocity) {
-            return false;
-        }
-        final float skidAngleThreshold = FastMath.PI*0.25f;
-        for (int i = 0; i < car.getNumWheels(); i++) {
-            VehicleWheel wheel = car.getWheel(i);
-            if (wheel.getCollisionLocation() == null) continue;
-            float angle = car.getController().getForwardVector(new Vector3f()).angleBetween(car.getLinearVelocity());
-            if (Math.abs(FastMath.HALF_PI-angle) < skidAngleThreshold) {
-                return true;
-            }
-        }
-        return false;
-    }
 	
 	public void cleanupViewPorts(RenderManager rm) {
 		rm.removeMainView(id+"-view");
 		rm.removePostView(id+"-gui-view");
+	}
+	public void cleanupInputs(InputMapper im) {
+		player.getInputScheme().removeListeners(im, this, this);
+        player.getInputScheme().activateGroup(im, false);
 	}
 	
 	public Player getControllingPlayer() {
@@ -320,16 +300,6 @@ public class Driver implements RawInputListener, StateFunctionListener,
 		return listeners;
 	}
 	
-	public void initializeInputs(InputMapper im, DriverInputScheme functions) {
-		this.functions = functions;
-		im.addStateListener(this, functions.getFunctions());
-		functions.activateGroup(im, true);
-	}
-	public void cleanupInputs(InputMapper im) {
-		if (functions == null) return;
-		im.removeStateListener(this, functions.getFunctions());
-		functions.activateGroup(im, false);
-	}
 	@Override
 	public void valueChanged(FunctionId func, InputState value, double tpf) {
 		if (finished) return;
@@ -350,6 +320,10 @@ public class Driver implements RawInputListener, StateFunctionListener,
 			car.setAngularVelocity(car.getPhysicsRotation().getRotationColumn(2).negateLocal().multLocal(5f));
 		}
 	}
+    @Override
+    public void valueActive(FunctionId func, double value, double tpf) {
+        if (finished) return;
+    }
 	
 	/**
 	 * Is a duplicate of Main.getChildGeometry(...).
@@ -365,41 +339,6 @@ public class Driver implements RawInputListener, StateFunctionListener,
 		}
 		return null;
 	}
-
-	@Override
-	public void beginInput() {}
-	@Override
-	public void endInput() {}
-	@Override
-	public void onJoyAxisEvent(JoyAxisEvent evt) {
-		if (finished) return;
-		if (evt.getAxis().getLogicalId().equals(JoystickAxis.Z_ROTATION)) {
-			car.steer(-steerAngle*evt.getValue());
-		}
-	}
-	@Override
-	public void onJoyButtonEvent(JoyButtonEvent evt) {
-		if (finished) return;
-		if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_0)) {
-			accelDirection = evt.isPressed() ? 1 : 0;
-			applyAcceleration();
-		}
-		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_1)) {
-			accelDirection = evt.isPressed() ? -1 : 0;
-			applyAcceleration();
-		}
-		else if (evt.getButton().getLogicalId().equals(JoystickButton.BUTTON_8) && evt.isPressed()) {
-			car.setAngularVelocity(car.getPhysicsRotation().getRotationColumn(2).negateLocal().multLocal(5f));
-		}
-	}
-	@Override
-	public void onMouseMotionEvent(MouseMotionEvent evt) {}
-	@Override
-	public void onMouseButtonEvent(MouseButtonEvent evt) {}
-	@Override
-	public void onKeyEvent(KeyInputEvent evt) {}
-	@Override
-	public void onTouchEvent(TouchEvent evt) {}
 	
 	
 }

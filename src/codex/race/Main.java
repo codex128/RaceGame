@@ -7,6 +7,7 @@ import codex.j3map.processors.FloatProcessor;
 import codex.j3map.processors.IntegerProcessor;
 import codex.j3map.processors.J3mapImporter;
 import codex.j3map.processors.StringProcessor;
+import codex.jmeutil.audio.AudioModel;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AppState;
 import com.jme3.bullet.BulletAppState;
@@ -47,7 +48,7 @@ public class Main extends SimpleApplication {
 		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
 		
 		BulletAppState bulletapp = new BulletAppState();
-		stateManager.attachAll(bulletapp, new MultiplayerSoundState());		
+		stateManager.attachAll(bulletapp, new GameFactory());		
         
 		assetManager.registerLoader(J3mapFactory.class, "j3map");
 		J3mapFactory.registerAllProcessors(
@@ -55,11 +56,11 @@ public class Main extends SimpleApplication {
 				StringProcessor.class,
 				FloatProcessor.class,
 				IntegerProcessor.class);
-		J3mapFactory.registerAllProcessors(
-                new J3mapImporter(assetManager));
+		J3mapFactory.registerAllProcessors(new J3mapImporter(assetManager));
         
-		stateManager.attach(new GrandPrixState(
-				(J3map)assetManager.loadAsset("Properties/races/GrandPrix1.j3map")));
+        AudioModel.Defaults.set((J3map)assetManager.loadAsset("Properties/sounds/audio_model_defaults.j3map"));
+        
+		stateManager.attach(new GrandPrixState());
 		
 		// disable basic viewports
 		viewPort.setBackgroundColor(SKY_COLOR);

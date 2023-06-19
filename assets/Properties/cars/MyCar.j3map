@@ -1,4 +1,6 @@
 model: "Models/ferrari/Car.j3o";
+material: "Materials/ferrari_material.j3m";
+texture: "Textures/$_car_texture.jpg";
 scale: .5f;
 mass: 2000f;
 accelleration: 12000f;

@@ -11,5 +11,6 @@ package codex.race;
 public interface DriverListener {
 	
 	public void onDriverFinish(Driver driver);
+    public void onLapFinish(Driver driver);
 	
 }

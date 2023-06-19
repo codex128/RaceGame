@@ -12,14 +12,19 @@ import codex.j3map.J3map;
  */
 public class Player {
 	
-	int pnum;
+    final int id;
+    int viewport;
 	J3map carData;
     DriverInputScheme inputScheme;
+    String carColor = "red";
+    
+    public Player(int id) {
+        this.id = id;
+    }
 	
-	public Player(int pnum) {
-		this.pnum = pnum;
-	}
-	
+	public void setViewPortNumber(int vpn) {
+        viewport = vpn;
+    }
 	public void setCarData(J3map carData) {
 		this.carData = carData;
 	}
@@ -27,11 +32,20 @@ public class Player {
         inputScheme = scheme;
     }
 	
-	public int getPlayerNumber() {
-		return pnum;
+    public int getId() {
+        return id;
+    }
+	public int getViewPortNumber() {
+		return viewport;
 	}
 	public J3map getCarData() {
 		return carData;
 	}
+    public DriverInputScheme getInputScheme() {
+        return inputScheme;
+    }
+    public String getCarColor() {
+        return carColor;
+    }
 	
 }
