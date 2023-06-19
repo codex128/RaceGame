@@ -53,7 +53,7 @@ public class RaceState extends GameAppState implements DriverListener,
 	LinkedList<RaceListener> listeners = new LinkedList<>();
 	Driver[] drivers;
 	int numLaps = -1;
-	float deathzone;
+	float deadzone;
 	int driversFinished = 0;
     Timer countdown, afterward;
 	SFXSpeaker[] music = new SFXSpeaker[2],
@@ -90,7 +90,6 @@ public class RaceState extends GameAppState implements DriverListener,
 		for (Driver d : drivers) {
 			d.cleanupViewPorts(renderManager);
 			d.cleanupInputs(GuiGlobals.getInstance().getInputMapper());
-			inputManager.removeRawInputListener(d);
 		}
 		drivers = null;
 		clearAllListeners();
@@ -108,7 +107,7 @@ public class RaceState extends GameAppState implements DriverListener,
 		for (Driver d : drivers) {
 			d.update(tpf);
 			d.detectLapTriggers(triggers, numLaps);
-			if (d.getVehicle().getPhysicsLocation().y < deathzone) {
+			if (d.getVehicle().getPhysicsLocation().y < deadzone) {
 				int i = wrap(d.getNextTriggerIndex()-1, 0, triggers.size()-1);
 				Spatial s = triggers.get(i).getSpatial();
 				d.warp(s.getWorldTranslation(), s.getWorldRotation());
@@ -223,7 +222,7 @@ public class RaceState extends GameAppState implements DriverListener,
 		//track.setMaterial(assetManager.loadMaterial("Materials/track_material.j3m"));
 		scene.attachChild(track);
 		
-		deathzone = trackData.getFloat("deathzone", trackData.getFloat("deadzone", -20f));
+		deadzone = trackData.getFloat("deathzone", trackData.getFloat("deadzone", -20f));
 		if (numLaps < 0) numLaps = trackData.getInteger("laps", 3);
 		
 		// music
@@ -269,102 +268,29 @@ public class RaceState extends GameAppState implements DriverListener,
 		}
 		
 		drivers = new Driver[players.size()];		
-		drivers[0] = createP1(players.get(0), drivers.length);
-		if (drivers.length >= 2) {
-			drivers[1] = createP2(players.get(1), drivers.length);
-		}
-		if (drivers.length >= 3) {
-			drivers[2] = createP3(players.get(2), drivers.length);
-		}
-		if (drivers.length >= 4) {
-			drivers[3] = createP4(players.get(3), drivers.length);
-		}
-		
 		Iterator<Transform> s = starts.iterator();
 		Transform t = new Transform();
 		for (int i = 0; i < drivers.length && s.hasNext(); i++) {
             Driver d = drivers[i] = new Driver(players.get(i));
-            d.createVehicle(assetManager);
+            d.createVehicle(factory);
+            d.createGameViewPort(renderManager, cam).attachScene(scene);
+            d.createGuiViewPort(renderManager, guiViewPort.getCamera());
+            d.setViewWindow(new ViewWindow(d.getControllingPlayer().getViewPortNumber(), drivers.length));
             d.configureInputs(GuiGlobals.getInstance().getInputMapper());
-			scene.attachChild(drivers[i].getVehicle().getSpatial());
-			getPhysicsSpace().add(drivers[i].getVehicle());
-            drivers[i].getVehicle().setLinearFactor(Vector3f.UNIT_Y);
-            drivers[i].getVehicle().setAngularFactor(new Vector3f(.5f, 0f, .5f));
+			scene.attachChild(d.getVehicle().getSpatial());
+			getPhysicsSpace().add(d.getVehicle());
+            d.getVehicle().setLinearFactor(Vector3f.UNIT_Y);
+            d.getVehicle().setAngularFactor(new Vector3f(.5f, 0f, .5f));
 			t.set(s.next());
-			drivers[i].configureGui(assetManager, windowSize);
-            //drivers[i].configureAudio(getState(MultiplayerSoundState.class, true));
-			drivers[i].warp(t.getTranslation(), t.getRotation());
-			Light[] lights = drivers[i].createHeadlights();
+			d.configureGui(assetManager, windowSize);
+			d.warp(t.getTranslation(), t.getRotation());
+			Light[] lights = d.createHeadlights();
 			for (Light l : lights) scene.addLight(l);
-			drivers[i].addListener(this);
+			d.addListener(this);
 		}
 		
 	}
 	
-	private Driver createP1(Player player, int n) {
-		Driver d = new Driver(player);
-		VehicleControl v = 
-		v.getSpatial().setMaterial(getCarMaterial("red"));
-		d.setCamera(cam);
-		//d.setAccelForce(2000f);
-		d.createGameViewPort(renderManager, cam).attachScene(scene);
-		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
-		d.setViewSize(getViewSize(0, n));
-		return d;
-	}
-	private Driver createP2(Player player, int n) {
-		Driver d = new Driver(player);
-		d.createVehicle(assetManager).getSpatial().setMaterial(getCarMaterial("blue"));
-		d.createGameViewPort(renderManager, cam).attachScene(scene);
-		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
-		d.setViewSize(getViewSize(1, n));
-		d.initializeInputs(GuiGlobals.getInstance().getInputMapper());
-		return d;
-	}
-	private Driver createP3(Player player, int n) {
-		Driver d = new Driver(player);
-		d.createVehicle(assetManager).getSpatial().setMaterial(getCarMaterial("green"));
-		d.createGameViewPort(renderManager, cam).attachScene(scene);
-		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
-		d.setViewSize(getViewSize(2, n));
-		d.initializeInputs(GuiGlobals.getInstance().getInputMapper(), Functions.IJKL);
-		return d;
-	}
-	private Driver createP4(Player player, int n) {
-		Driver d = new Driver(player);
-		d.createVehicle(assetManager).getSpatial().setMaterial(getCarMaterial("yellow"));
-		d.createGameViewPort(renderManager, cam).attachScene(scene);
-		d.createGuiViewPort(renderManager, guiViewPort.getCamera());
-		d.setViewSize(getViewSize(3, n));
-		//d.configureInputs(GuiGlobals.getInstance().getInputMapper(),
-		//		KeyInput.KEY_NUMPAD5, KeyInput.KEY_NUMPAD1, KeyInput.KEY_NUMPAD7, KeyInput.KEY_NUMPAD4, KeyInput.KEY_NUMPADENTER, KeyInput.KEY_NUMPAD2, KeyInput.KEY_NUMPAD3);
-		inputManager.addRawInputListener(d);
-		return d;
-	}
-    private Material getCarMaterial(String color) {
-        String texSource = "Textures/"+color+"_car_texture.jpg";
-        Material mat = assetManager.loadMaterial("Materials/ferrari_material.j3m");
-        Texture tex = assetManager.loadTexture(new TextureKey(texSource, false));
-        mat.setTexture("DiffuseMap", tex);
-        return mat;
-    }
-	
-	private static Vector4f getViewSize(int i, int n) {
-		assert i < n;
-		switch (n) {
-			case 1: return new Vector4f(0f, 1f, 0f, 1f);
-			case 2: switch (i) {
-				case 0:  return new Vector4f(0f, .5f, .25f, .75f);
-				default: return new Vector4f(.5f, 1f, .25f, .75f);
-			}
-			default: switch (i) {
-				case 0:  return new Vector4f(0f, .5f, .5f, 1f);
-				case 1: return new Vector4f(.5f, 1f, .5f, 1f);
-				case 2:  return new Vector4f(0f, .5f, 0f, .5f);
-				default:  return new Vector4f(.5f, 1f, 0f, .5f);
-			}
-		}
-	}	
 	private static String getNumberSuffix(int n) {
 		switch (n) {
 			case 1: return "st";

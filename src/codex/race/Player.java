@@ -16,7 +16,7 @@ public class Player {
     int viewport;
 	J3map carData;
     DriverInputScheme inputScheme;
-    String carColor = "red";
+    String carColor = GameFactory.COLORS[0];
     
     public Player(int id) {
         this.id = id;
@@ -30,6 +30,9 @@ public class Player {
 	}
     public void setInputScheme(DriverInputScheme scheme) {
         inputScheme = scheme;
+    }
+    public void setCarColor(String color) {
+        carColor = color;
     }
 	
     public int getId() {

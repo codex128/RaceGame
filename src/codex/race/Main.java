@@ -60,7 +60,7 @@ public class Main extends SimpleApplication {
         
         AudioModel.Defaults.set((J3map)assetManager.loadAsset("Properties/sounds/audio_model_defaults.j3map"));
         
-		stateManager.attach(new GrandPrixState());
+		stateManager.attach(new GrandPrixState((J3map)assetManager.loadAsset("Properties/races/GrandPrix1.j3map")));
 		
 		// disable basic viewports
 		viewPort.setBackgroundColor(SKY_COLOR);

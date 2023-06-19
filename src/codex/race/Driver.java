@@ -55,7 +55,7 @@ public class Driver implements
 	Camera gameCam;
 	Camera guiCam;
 	Node gui;
-	Vector4f viewSize;
+	ViewWindow window;
 	DriverInputScheme functions;
 	float baseAccelForce = 12000f;
 	float steerAngle = .5f;
@@ -80,7 +80,7 @@ public class Driver implements
         final float mass = player.getCarData().getFloat("mass", 200f);
         
         //Load model and get chassis Geometry
-        Spatial model = factory.createCarModel(suspension, player.getCarColor());
+        Spatial model = factory.createCarModel(player.getCarData(), player.getCarColor());
         Geometry chasis = getChildGeometry(model, "Car");
         BoundingBox box = (BoundingBox)chasis.getModelBound();
 
@@ -192,10 +192,10 @@ public class Driver implements
 //		((Node)car.getSpatial()).attachChild(n);
 		return new Light[] {light};
 	}
-	public void setViewSize(Vector4f size) {
-		viewSize = size;
-		gameCam.setViewPort(size.x, size.y, size.z, size.w);
-		guiCam.setViewPort(size.x, size.y, size.z, size.w);
+	public void setViewWindow(ViewWindow window) {
+		window.applyToCamera(gameCam);
+		window.applyToCamera(guiCam);
+		this.window = window;
 	}
 	public void setCar(VehicleControl car) {
 		this.car = car;
@@ -283,8 +283,8 @@ public class Driver implements
 	public Node getGui() {
 		return gui;
 	}
-	public Vector4f getViewSize() {
-		return viewSize;
+	public ViewWindow getViewWindow() {
+		return window;
 	}
 	public int getNextTriggerIndex() {
 		return nextTrigger;

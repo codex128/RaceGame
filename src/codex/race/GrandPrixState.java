@@ -5,36 +5,31 @@
 package codex.race;
 
 import codex.j3map.J3map;
-import codex.race.config.PlayerConfigState;
 import com.jme3.app.Application;
 import java.util.List;
 import codex.race.config.ConfigClient;
-import codex.race.config.ConfigClientState;
 import codex.race.config.ConfigState;
-import codex.race.config.RaceSelectionState;
 
 /**
  *
  * @author gary
  */
-public class GrandPrixState extends ConfigClientState implements RaceListener, ConfigClient {
+public class GrandPrixState extends GameAppState implements RaceListener, ConfigClient {
 	
 	J3map data;
 	int index;
 	List<Player> players;
 	int forceLaps;
 	
-	public GrandPrixState() {
-		super(new PlayerConfigState(4), new RaceSelectionState(false));
-	}
+	public GrandPrixState() {}
+    public GrandPrixState(J3map data) {
+        this.data = data;
+    }
 	
 	@Override
 	protected void init(Application app) {
-		
-        super.init(app);
-		
-		index = data.getInteger("startIndex", 0);
-		forceLaps = data.getInteger("forceLaps", -1);
+        
+        //getStateManager().attach(createRace());
 		
 	}
 	@Override
@@ -56,13 +51,13 @@ public class GrandPrixState extends ConfigClientState implements RaceListener, C
         this.players = players;
     }
     @Override
-    public void recieveSelectedRaceData(J3map raceData) {
+    public void recieveSelectedRaceData(J3map raceData) {		
         data = raceData;
+		index = data.getInteger("startIndex", 0);
+		forceLaps = data.getInteger("forceLaps", -1);
     }
     @Override
-    public void allConfigsComplete() {
-        getStateManager().attach(createRace());
-    }
+    public void configFinished(ConfigState config) {}
 	
 	private RaceState createRace() {
 		String r = data.getString("race"+(index++));
