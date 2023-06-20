@@ -1,7 +1,8 @@
 # RaceGame
 Multiplayer physics-based racing game built with JMonkeyEngine3.
 
-![racing](https://github.com/codex128/RaceGame/blob/master/assets/Textures/RaceGame1.png)
+![starting](https://github.com/codex128/RaceGame/blob/master/assets/Textures/race_start.png)
+![racing](https://github.com/codex128/RaceGame/blob/master/assets/Textures/racing.png)
 
 # Instructions
 The current version starts with a blank screen. Do not be alarmed, the program
