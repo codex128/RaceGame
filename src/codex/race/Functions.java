@@ -25,7 +25,7 @@ public class Functions {
 	
 	public static void initialize(InputMapper im) {
 		ARROW_KEYS.initialize(im, KeyInput.KEY_UP, KeyInput.KEY_DOWN,
-				KeyInput.KEY_RIGHT, KeyInput.KEY_LEFT, KeyInput.KEY_RCONTROL);
+				KeyInput.KEY_RIGHT, KeyInput.KEY_LEFT, KeyInput.KEY_RSHIFT);
         
 		WASD.initialize(im, KeyInput.KEY_W, KeyInput.KEY_S,
 				KeyInput.KEY_D, KeyInput.KEY_A, KeyInput.KEY_F);
