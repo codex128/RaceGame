@@ -2,6 +2,7 @@
 Multiplayer physics-based racing game built with JMonkeyEngine3.
 
 ![starting](https://github.com/codex128/RaceGame/blob/master/assets/Textures/race_start.png)
+-----
 ![racing](https://github.com/codex128/RaceGame/blob/master/assets/Textures/racing.png)
 
 # Instructions
