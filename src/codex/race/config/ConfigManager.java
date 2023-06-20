@@ -23,7 +23,9 @@ public class ConfigManager extends ConfigState {
     }
     
     @Override
-    protected void init(Application app) {}
+    protected void init(Application app) {
+        advance();
+    }
     @Override
     protected void cleanup(Application app) {
         if (current != null) {

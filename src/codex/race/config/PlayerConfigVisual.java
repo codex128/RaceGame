@@ -22,7 +22,7 @@ public class PlayerConfigVisual {
     
     private final Player player;
     private final GameFactory factory;
-    private Node scene, gui;
+    private Node scene = new Node("scene"), gui = new Node("gui");
     private PlayerConfigWindow window;
     
     public PlayerConfigVisual(Player player, GameFactory factory) {

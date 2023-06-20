@@ -8,7 +8,9 @@ import codex.j3map.J3map;
 import com.jme3.app.Application;
 import java.util.List;
 import codex.race.config.ConfigClient;
+import codex.race.config.ConfigManager;
 import codex.race.config.ConfigState;
+import codex.race.config.PlayerConfigState;
 import java.util.LinkedList;
 
 /**
@@ -19,6 +21,7 @@ public class GrandPrixState extends GameAppState implements RaceListener, Config
 	
     private static final int NUM_PLAYERS = 2;
     
+    ConfigManager manager;
 	J3map data;
 	int index;
 	List<Player> players;
@@ -27,28 +30,17 @@ public class GrandPrixState extends GameAppState implements RaceListener, Config
 	public GrandPrixState() {}
     public GrandPrixState(J3map data) {
         this.data = data;
+        getInfo();
     }
 	
 	@Override
 	protected void init(Application app) {
         
-        // manually initialize players
-        players = new LinkedList<>();
-        J3map commonCar = (J3map)assetManager.loadAsset("Properties/cars/MyCar.j3map");
-        for (int i = 0; i < NUM_PLAYERS; i++) {
-            Player p = new Player(i);
-            p.setViewPortNumber(i);
-            p.setCarData(commonCar);
-            p.setInputScheme(Functions.SCHEMES[i]);
-            p.setCarColor(GameFactory.COLORS[i]);
-            players.add(p);
-        }        
+        manager = new ConfigManager(this, new PlayerConfigState());
+        getStateManager().attach(manager);
         
-		index = data.getInteger("startIndex", 0);
-		forceLaps = data.getInteger("forceLaps", -1);
+        //manualConfig();
         
-        getStateManager().attach(createRace());
-		
 	}
 	@Override
 	protected void cleanup(Application app) {}
@@ -71,14 +63,36 @@ public class GrandPrixState extends GameAppState implements RaceListener, Config
     @Override
     public void recieveSelectedRaceData(J3map raceData) {		
         data = raceData;
-		index = data.getInteger("startIndex", 0);
-		forceLaps = data.getInteger("forceLaps", -1);
+		getInfo();
     }
     @Override
     public void configFinished(ConfigState config) {
-        
+        manager.advance();
+    }    
+    @Override
+    public void allConfigsFinished() {
+        getStateManager().detach(manager);
+        getStateManager().attach(createRace());
     }
 	
+    private void manualConfig() {
+        players = new LinkedList<>();
+        J3map commonCar = (J3map)assetManager.loadAsset("Properties/cars/MyCar.j3map");
+        for (int i = 0; i < NUM_PLAYERS; i++) {
+            Player p = new Player(i);
+            p.setViewPortNumber(i);
+            p.setCarData(commonCar);
+            p.setInputScheme(Functions.SCHEMES[i]);
+            p.setCarColor(GameFactory.COLORS[i]);
+            players.add(p);
+        }       
+        getStateManager().attach(createRace());
+    }
+    private void getInfo() {        
+		index = data.getInteger("startIndex", 0);
+		forceLaps = data.getInteger("forceLaps", -1); 
+    }
+    
 	private RaceState createRace() {
 		String r = data.getString("race"+(index++));
 		if (r == null) return null;
@@ -89,6 +103,7 @@ public class GrandPrixState extends GameAppState implements RaceListener, Config
     private RaceModel constructRaceModel(String source) {
         RaceModel m = new RaceModel();
         m.setTrackData((J3map)assetManager.loadAsset(source));
+        System.out.println("there are "+players.size()+" players");
         m.setPlayers(players);
         m.setForcedLaps(forceLaps);
         return m;

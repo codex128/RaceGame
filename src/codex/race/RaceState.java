@@ -262,11 +262,13 @@ public class RaceState extends GameAppState implements DriverListener,
 		}
 		
 		drivers = new Driver[model.getPlayers().size()];
+        System.out.println("there are "+drivers.length+" drivers");
 		Iterator<Transform> s = starts.iterator();
 		Transform t = new Transform();
 		for (int i = 0; i < drivers.length && s.hasNext(); i++) {
             Driver d = drivers[i] = new Driver(model.getPlayers().get(i));
             d.createVehicle(factory);
+            System.out.println("create view port");
             d.createGameViewPort(renderManager, cam).attachScene(scene);
             d.createGuiViewPort(renderManager, guiViewPort.getCamera());
             d.setViewWindow(new ViewWindow(d.getControllingPlayer().getViewPortNumber(), drivers.length));
