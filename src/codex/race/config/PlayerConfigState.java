@@ -68,6 +68,7 @@ public class PlayerConfigState extends ConfigState implements StateFunctionListe
         }
         renderManager.removePostView(PlayerConfigState.class.getName()+"(gui)");
         availableSchemes.clear();
+        availableColors.clear();
         windows = null;
     }    
     @Override
@@ -98,7 +99,7 @@ public class PlayerConfigState extends ConfigState implements StateFunctionListe
         gui.setQueueBucket(RenderQueue.Bucket.Gui);
         ViewPort vp = renderManager.createPostView(PlayerConfigState.class.getName()+"(gui)", guiViewPort.getCamera().clone());
         vp.attachScene(gui);
-        vp.setClearFlags(true, true, true);
+        //vp.setClearFlags(true, true, true);
         vp.setBackgroundColor(ColorRGBA.randomColor());
         new ViewWindow(new Vector4f(.5f, 1.5f, 0f, 1f)).applyToCamera(vp.getCamera());
         vp.getCamera().resize((int)windowSize.x/2, (int)windowSize.y, true);

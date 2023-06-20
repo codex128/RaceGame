@@ -4,14 +4,10 @@
  */
 package codex.race;
 
-import codex.j3map.J3map;
 import codex.jmeutil.listen.Listenable;
 import codex.jmeutil.scene.SceneGraphIterator;
 import com.jme3.asset.AssetManager;
-import com.jme3.bounding.BoundingBox;
-import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.VehicleControl;
-import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.collision.CollisionResults;
 import com.jme3.light.Light;
 import com.jme3.light.SpotLight;
@@ -22,7 +18,6 @@ import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
-import com.jme3.math.Vector4f;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
@@ -265,6 +260,9 @@ public class Driver implements
     @Override
     public void valueActive(FunctionId func, double value, double tpf) {
         if (finished) return;
+        if (func == player.getInputScheme().getSteer()) {
+            car.steer(-steerAngle*(float)value);
+        }
     }
 	
     /**
