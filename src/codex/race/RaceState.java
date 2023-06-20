@@ -15,28 +15,21 @@ import codex.jmeutil.audio.SpeakerListener;
 import codex.jmeutil.listen.Listenable;
 import codex.jmeutil.scene.SceneGraphIterator;
 import com.jme3.app.Application;
-import com.jme3.asset.TextureKey;
 import com.jme3.bullet.control.RigidBodyControl;
-import com.jme3.bullet.control.VehicleControl;
 import com.jme3.light.DirectionalLight;
 import com.jme3.light.Light;
-import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Transform;
 import com.jme3.math.Vector3f;
-import com.jme3.math.Vector4f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.jme3.texture.Texture;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.Label;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  *

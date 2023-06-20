@@ -8,6 +8,7 @@ import codex.j3map.processors.IntegerProcessor;
 import codex.j3map.processors.J3mapImporter;
 import codex.j3map.processors.StringProcessor;
 import codex.jmeutil.audio.AudioModel;
+import codex.race.config.PlayerConfigState;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AppState;
 import com.jme3.bullet.BulletAppState;
@@ -15,6 +16,7 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.renderer.RenderManager;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.GuiGlobals;
+import com.simsilica.lemur.input.InputMapper;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -24,6 +26,7 @@ import com.simsilica.lemur.GuiGlobals;
 public class Main extends SimpleApplication {
 	
 	public static final ColorRGBA SKY_COLOR = new ColorRGBA(.1f, .1f, .1f, 1f);
+    public static final int MAX_PLAYERS = 4;
     
 	
 	public Main() {
@@ -43,7 +46,7 @@ public class Main extends SimpleApplication {
         
 		GuiGlobals.initialize(this);
 		GuiGlobals.getInstance().setCursorEventsEnabled(false);
-		Functions.initialize(GuiGlobals.getInstance().getInputMapper());
+        initializeMappings(GuiGlobals.getInstance().getInputMapper());
 		
 		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
 		
@@ -74,5 +77,10 @@ public class Main extends SimpleApplication {
 	}
     @Override
     public void simpleRender(RenderManager rm) {}
+    
+    private void initializeMappings(InputMapper im) {
+		Functions.initialize(im);        
+        PlayerConfigState.initializeMappings(im);
+    }
 	
 }

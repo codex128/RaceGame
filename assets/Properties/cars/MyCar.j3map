@@ -5,11 +5,12 @@ scale: .5f;
 mass: 2000f;
 accelleration: 12000f;
 steeringAngle: .5f;
+chassis: "Car-geom-1";
 wheels: {
-    fr: "WheelFrontRight";
-    fl: "WheelFrontLeft";
-    br: "WheelBackRight";
-    bl: "WheelBackLeft";
+    fr: "WheelFrontRight-geom-1";
+    fl: "WheelFrontLeft-geom-1";
+    br: "WheelBackRight-geom-1";
+    bl: "WheelBackLeft-geom-1";
 }
 suspension: {
     stiffness: 70f;

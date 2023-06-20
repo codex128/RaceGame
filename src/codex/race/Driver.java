@@ -66,71 +66,15 @@ public class Driver implements
 	
 	public Driver(Player player) {
 		this.player = player;
-		id = "p"+player.getId();
+		id = "p"+player.getPlayerNumber();
 		baseAccelForce = player.getCarData().getFloat("accelleration", 12000f);
 		steerAngle = player.getCarData().getFloat("steeringAngle", .5f);
 	}
 	
-	public VehicleControl createVehicle(GameFactory factory) {
-		J3map suspension = player.getCarData().getJ3map("suspension");
-		float stiffness = suspension.getFloat("stiffness", 120f);
-        float compValue = suspension.getFloat("compression", .2f);
-        float dampValue = suspension.getFloat("damping", .3f);
-        final float mass = player.getCarData().getFloat("mass", 200f);
-        
-        //Load model and get chassis Geometry
-        Spatial model = factory.createCarModel(player.getCarData(), player.getCarColor());
-        Geometry chasis = getChildGeometry(model, "Car");
-        BoundingBox box = (BoundingBox)chasis.getModelBound();
-
-        //Create a hull collision shape for the chassis
-        CollisionShape carHull = CollisionShapeFactory.createDynamicMeshShape(chasis);
-
-        //Create a vehicle control
-		car = new VehicleControl(carHull, mass);
-        model.addControl(car);
-
-        //Setting default values for wheels
-        car.setSuspensionCompression(compValue * 2.0f * FastMath.sqrt(stiffness));
-        car.setSuspensionDamping(dampValue * 2.0f * FastMath.sqrt(stiffness));
-        car.setSuspensionStiffness(stiffness);
-        car.setMaxSuspensionForce(10000);
-
-        //Create four wheels and add them at their locations
-        //note that our fancy car actually goes backwards..
-        Vector3f wheelDirection = new Vector3f(0, -1, 0);
-        Vector3f wheelAxle = new Vector3f(-1, 0, 0);
-		J3map wheels = player.getCarData().getJ3map("wheels");
-		
-        Geometry wheel_fr = getChildGeometry(model, wheels.getString("fr"));
-        wheel_fr.center();
-        box = (BoundingBox) wheel_fr.getModelBound();
-        float wheelRadius = box.getYExtent();
-        float back_wheel_h = (wheelRadius * 1.7f) - 1f;
-        float front_wheel_h = (wheelRadius * 1.9f) - 1f;
-        car.addWheel(wheel_fr.getParent(), box.getCenter().add(0, -front_wheel_h, 0),
-                wheelDirection, wheelAxle, 0.2f, wheelRadius, true);
-
-        Geometry wheel_fl = getChildGeometry(model, wheels.getString("fl"));
-        wheel_fl.center();
-        box = (BoundingBox) wheel_fl.getModelBound();
-        car.addWheel(wheel_fl.getParent(), box.getCenter().add(0, -front_wheel_h, 0),
-                wheelDirection, wheelAxle, 0.2f, wheelRadius, true);
-
-        Geometry wheel_br = getChildGeometry(model, wheels.getString("br"));
-        wheel_br.center();
-        box = (BoundingBox) wheel_br.getModelBound();
-        car.addWheel(wheel_br.getParent(), box.getCenter().add(0, -back_wheel_h, 0),
-                wheelDirection, wheelAxle, 0.2f, wheelRadius, false);
-
-        Geometry wheel_bl = getChildGeometry(model, wheels.getString("bl"));
-        wheel_bl.center();
-        box = (BoundingBox) wheel_bl.getModelBound();
-        car.addWheel(wheel_bl.getParent(), box.getCenter().add(0, -back_wheel_h, 0),
-                wheelDirection, wheelAxle, 0.2f, wheelRadius, false);
-		
-		return car;
-	}
+	public VehicleControl createVehicle(GameFactory factory) {        
+		car = factory.createVehicle(factory.createCarModel(player.getCarData(), player.getCarColor()), player.getCarData());
+        return car;
+    }
 	public ViewPort createGameViewPort(RenderManager rm, Camera base) {
 		gameCam = base.clone();
 		//gameCam.setFov(90f);
@@ -323,16 +267,21 @@ public class Driver implements
         if (finished) return;
     }
 	
-	/**
-	 * Is a duplicate of Main.getChildGeometry(...).
-	 * @param spatial
-	 * @param name
-	 * @return 
-	 */
+    /**
+     * Fetches a child named.
+     * @param spatial
+     * @param name
+     * @return 
+     */
 	private static Geometry getChildGeometry(Spatial spatial, String name) {
 		for (Spatial s : new SceneGraphIterator(spatial)) {
-			if (s instanceof Geometry && s.getName().startsWith(name)) {
-				return (Geometry)s;
+			if (s.getName().equals(name)) {
+				if (s instanceof Geometry) {
+                    return (Geometry)s;
+                }
+                else {
+                    throw new IllegalStateException("Spatial \""+name+"\" is not a Geometry!");
+                }
 			}
 		}
 		return null;

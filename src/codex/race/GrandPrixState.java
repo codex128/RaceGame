@@ -17,7 +17,7 @@ import java.util.LinkedList;
  */
 public class GrandPrixState extends GameAppState implements RaceListener, ConfigClient {
 	
-    private static final int NUM_PLAYERS = 3;
+    private static final int NUM_PLAYERS = 2;
     
 	J3map data;
 	int index;
@@ -75,7 +75,9 @@ public class GrandPrixState extends GameAppState implements RaceListener, Config
 		forceLaps = data.getInteger("forceLaps", -1);
     }
     @Override
-    public void configFinished(ConfigState config) {}
+    public void configFinished(ConfigState config) {
+        
+    }
 	
 	private RaceState createRace() {
 		String r = data.getString("race"+(index++));

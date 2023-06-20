@@ -17,5 +17,6 @@ public interface ConfigClient {
     public void recieveConfiguredPlayers(List<Player> players);
     public void recieveSelectedRaceData(J3map raceData);
     public void configFinished(ConfigState config);
+    public void allConfigsFinished();
     
 }

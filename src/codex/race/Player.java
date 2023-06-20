@@ -12,16 +12,18 @@ import codex.j3map.J3map;
  */
 public class Player {
 	
-    final int id;
-    int viewport;
-	J3map carData;
-    DriverInputScheme inputScheme;
-    String carColor = GameFactory.COLORS[0];
+    private int pnum, viewport;
+	private J3map carData;
+    private DriverInputScheme inputScheme;
+    private String carColor = GameFactory.COLORS[0];
     
-    public Player(int id) {
-        this.id = id;
+    public Player(int pnum) {
+        this.pnum = pnum;
     }
 	
+    public void setPlayerNumber(int pnum) {
+        this.pnum = pnum;
+    }
 	public void setViewPortNumber(int vpn) {
         viewport = vpn;
     }
@@ -35,8 +37,8 @@ public class Player {
         carColor = color;
     }
 	
-    public int getId() {
-        return id;
+    public int getPlayerNumber() {
+        return pnum;
     }
 	public int getViewPortNumber() {
 		return viewport;

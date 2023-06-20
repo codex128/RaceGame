@@ -14,9 +14,9 @@ import com.simsilica.lemur.input.InputMapper;
 public class Functions {
 	
 	public static final DriverInputScheme
-			ARROW_KEYS = new DriverInputScheme("arrow-keys"),
-			WASD = new DriverInputScheme("wasd"),
-			IJKL = new DriverInputScheme("ijkl");
+			ARROW_KEYS = new DriverInputScheme("Arrow Keys"),
+			WASD = new DriverInputScheme("WASD"),
+			IJKL = new DriverInputScheme("IJKL");
     public static final DriverInputScheme[]
             SCHEMES = {ARROW_KEYS, WASD, IJKL};
 	
