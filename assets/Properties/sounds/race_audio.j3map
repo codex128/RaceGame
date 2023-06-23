@@ -17,6 +17,10 @@ lap: {
         source: "Sounds/Gun.wav";
     }
 }
+finish: {
+    source: "Sounds/Healing Full.wav";
+    volume: 2.5f;
+}
 victory: {
     intro: {
         source: "Sounds/Gun.wav";

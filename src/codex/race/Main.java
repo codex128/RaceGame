@@ -13,6 +13,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AppState;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.GuiGlobals;
@@ -51,6 +52,7 @@ public class Main extends SimpleApplication {
 		cam.setFrustumPerspective(120f, cam.getAspect(), .5f, 100f);
 		
 		BulletAppState bulletapp = new BulletAppState();
+        bulletapp.setDebugEnabled(!true);
 		stateManager.attachAll(bulletapp, new GameFactory());		
         
 		assetManager.registerLoader(J3mapFactory.class, "j3map");
@@ -58,7 +60,8 @@ public class Main extends SimpleApplication {
 				BooleanProcessor.class,
 				StringProcessor.class,
 				FloatProcessor.class,
-				IntegerProcessor.class);
+				IntegerProcessor.class,
+                Vector3fProcessor.class);
 		J3mapFactory.registerAllProcessors(new J3mapImporter(assetManager));
         
         AudioModel.Defaults.set((J3map)assetManager.loadAsset("Properties/sounds/audio_model_defaults.j3map"));
@@ -69,6 +72,8 @@ public class Main extends SimpleApplication {
 		viewPort.setBackgroundColor(SKY_COLOR);
 		viewPort.detachScene(rootNode);
 		guiViewPort.detachScene(guiNode);
+        
+        //bulletapp.getPhysicsSpace().setGravity(new Vector3f(0f, -50f, 0f));
 		
     }
     @Override

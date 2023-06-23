@@ -7,6 +7,7 @@ package codex.race.config;
 import codex.j3map.J3map;
 import codex.race.GameFactory;
 import codex.race.Player;
+import com.jme3.material.Material;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.simsilica.lemur.Label;
@@ -79,7 +80,8 @@ public class PlayerConfigVisual {
         player.setCarColor(color);
         Spatial car = getSpatial("car");
         if (car != null) {
-            car.setMaterial(factory.createCarMaterial(player.getCarData(), player.getCarColor()));
+            Material mat = factory.createCarMaterial(player.getCarData(), player.getCarColor());
+            if (mat != null) car.setMaterial(mat);
         }
     }
     public void setPlayerNumber(int n) {

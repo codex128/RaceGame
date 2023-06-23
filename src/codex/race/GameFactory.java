@@ -44,7 +44,9 @@ public class GameFactory extends GameAppState {
      */
     public Spatial createCarModel(J3map carData, String color) {
         Spatial model = assetManager.loadModel(carData.getString("model"));
-        model.setMaterial(createCarMaterial(carData, color));
+        if (carData.propertyExists("material")) {
+            model.setMaterial(createCarMaterial(carData, color));
+        }
         return model;
     }
     
@@ -55,6 +57,9 @@ public class GameFactory extends GameAppState {
      * @return 
      */
     public Material createCarMaterial(J3map carData, String color) {
+        if (!carData.propertyExists("material")) {
+            return null;
+        }
         Material mat = assetManager.loadMaterial(carData.getString("material"));
         Texture tex = assetManager.loadTexture(new TextureKey(carData.getString("texture").replace((CharSequence)"$", color), false));
         mat.setTexture("DiffuseMap", tex);
@@ -90,7 +95,7 @@ public class GameFactory extends GameAppState {
         car.setSuspensionCompression(compValue * 2.0f * FastMath.sqrt(stiffness));
         car.setSuspensionDamping(dampValue * 2.0f * FastMath.sqrt(stiffness));
         car.setSuspensionStiffness(stiffness);
-        car.setMaxSuspensionForce(10000);
+        car.setMaxSuspensionForce(1);
 
         //Create four wheels and add them at their locations
         //note that our fancy car actually goes backwards..
@@ -98,12 +103,15 @@ public class GameFactory extends GameAppState {
         Vector3f wheelAxle = new Vector3f(-1, 0, 0);
 		J3map wheels = carData.getJ3map("wheels");
 		
+        car.setFrictionSlip(.5f);
+        car.setRollingFriction(10000f);
+        
         Geometry wheel_fr = getChildGeometry(model, wheels.getString("fr"));
         wheel_fr.center();
         BoundingBox box = (BoundingBox)wheel_fr.getModelBound();
         float wheelRadius = box.getYExtent();
         float back_wheel_h = (wheelRadius * 1.7f) - 1f;
-        float front_wheel_h = (wheelRadius * 1.9f) - 1f;
+        float front_wheel_h = (wheelRadius * 1.7f) - 1f;
         car.addWheel(wheel_fr.getParent(), box.getCenter().add(0, -front_wheel_h, 0),
                 wheelDirection, wheelAxle, 0.2f, wheelRadius, true);
 
@@ -124,6 +132,22 @@ public class GameFactory extends GameAppState {
         box = (BoundingBox) wheel_bl.getModelBound();
         car.addWheel(wheel_bl.getParent(), box.getCenter().add(0, -back_wheel_h, 0),
                 wheelDirection, wheelAxle, 0.2f, wheelRadius, false);
+        
+        for (int i = 0; i < car.getNumWheels(); i++) {
+            car.setRollInfluence(i, 0f);
+        }
+        
+        J3map axles = carData.getJ3map("axles");
+        if (axles != null) {
+            Geometry axle_fr = getChildGeometry(model, axles.getString("fr"));
+            axle_fr.addControl(new AxleControl(wheel_fr));
+            Geometry axle_fl = getChildGeometry(model, axles.getString("fl"));
+            axle_fl.addControl(new AxleControl(wheel_fl));
+            Geometry axle_br = getChildGeometry(model, axles.getString("br"));
+            axle_br.addControl(new AxleControl(wheel_br));
+            Geometry axle_bl = getChildGeometry(model, axles.getString("bl"));
+            axle_bl.addControl(new AxleControl(wheel_bl));
+        }
 		
 		return car;
     }

@@ -1,0 +1,23 @@
+model: "Models/riptor/riptor.j3o";
+mass: 4000f;
+accelleration: 20000f;
+steeringAngle: .3f;
+camera_location: Vector3f(0f, 1.5f, 0f);
+chassis: "car_geo";
+wheels: {
+    fr: "wheel_geo_fr";
+    fl: "wheel_geo_fl";
+    br: "wheel_geo_br";
+    bl: "wheel_geo_bl";
+}
+/*axles: {
+    fr: "axle_geo_fr";
+    fl: "axle_geo_fl";
+    br: "axle_geo_br";
+    bl: "axle_geo_bl";
+}*/
+suspension: {
+    stiffness: 700f;
+    compression: .001f;
+    damping: .1f;
+}

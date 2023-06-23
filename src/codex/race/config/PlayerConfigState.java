@@ -52,7 +52,7 @@ public class PlayerConfigState extends ConfigState implements StateFunctionListe
         initGui();
         initWindows();
         initInputs();
-        commonCar = (J3map)assetManager.loadAsset("Properties/cars/MyCar.j3map");
+        commonCar = (J3map)assetManager.loadAsset("Properties/cars/riptor.j3map");
         
     }
     @Override

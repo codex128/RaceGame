@@ -51,7 +51,7 @@ public class RaceState extends GameAppState implements DriverListener,
 	SFXSpeaker[] music = new SFXSpeaker[2],
             countdownAudio = new SFXSpeaker[2],
             lapAudio = new SFXSpeaker[2];
-    SFXSpeaker introAudio;
+    SFXSpeaker introAudio, finishAudio;
     SequencedSpeaker victoryAudio;
 	
 	public RaceState(RaceModel model) {
@@ -107,6 +107,7 @@ public class RaceState extends GameAppState implements DriverListener,
 			d.updateNodeStates(tpf);
 		}
         introAudio.manualUpdate(tpf);
+        finishAudio.manualUpdate(tpf);
         music[0].manualUpdate(tpf);
         music[1].manualUpdate(tpf);
         countdownAudio[0].manualUpdate(tpf);
@@ -132,7 +133,10 @@ public class RaceState extends GameAppState implements DriverListener,
         if (driversFinished == 1) {
             music[0].stop();
             music[1].stop();
-            victoryAudio.play();
+            finishAudio.play();
+        }
+        else {
+            finishAudio.playInstance();
         }
 	}
     @Override
@@ -178,6 +182,9 @@ public class RaceState extends GameAppState implements DriverListener,
         else if (speaker == lapAudio[1]) {
             music[1].play();
         }
+        else if (speaker == finishAudio) {
+            victoryAudio.play();
+        }
     }
 	@Override
 	public Collection<RaceListener> getListeners() {
@@ -195,6 +202,8 @@ public class RaceState extends GameAppState implements DriverListener,
         J3map audio = (J3map)assetManager.loadAsset("Properties/sounds/race_audio.j3map");
         introAudio = new SFXSpeaker(assetManager, new AudioModel(audio.getJ3map("intro")));
         introAudio.addListener(this);
+        finishAudio = new SFXSpeaker(assetManager, new AudioModel(audio.getJ3map("finish")));
+        finishAudio.addListener(this);
         J3map countAudio = audio.getJ3map("countdown");
         countdownAudio[0] = new SFXSpeaker(assetManager, new AudioModel(countAudio.getJ3map("minor")));
         countdownAudio[1] = new SFXSpeaker(assetManager, new AudioModel(countAudio.getJ3map("major")));        
@@ -268,7 +277,6 @@ public class RaceState extends GameAppState implements DriverListener,
 		for (int i = 0; i < drivers.length && s.hasNext(); i++) {
             Driver d = drivers[i] = new Driver(model.getPlayers().get(i));
             d.createVehicle(factory);
-            System.out.println("create view port");
             d.createGameViewPort(renderManager, cam).attachScene(scene);
             d.createGuiViewPort(renderManager, guiViewPort.getCamera());
             d.setViewWindow(new ViewWindow(d.getControllingPlayer().getViewPortNumber(), drivers.length));
@@ -284,6 +292,8 @@ public class RaceState extends GameAppState implements DriverListener,
 			for (Light l : lights) scene.addLight(l);
 			d.addListener(this);
 		}
+        
+        bullet.setDebugViewPorts(renderManager.getMainView(drivers[0].getGameViewPortId()));
 		
 	}
     

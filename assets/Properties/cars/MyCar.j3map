@@ -1,10 +1,10 @@
 model: "Models/ferrari/Car.j3o";
 material: "Materials/ferrari_material.j3m";
 texture: "Textures/$_car_texture.jpg";
-scale: .5f;
 mass: 2000f;
 accelleration: 12000f;
 steeringAngle: .5f;
+camera_location: Vector3f(0f, 2f, 0f);
 chassis: "Car-geom-1";
 wheels: {
     fr: "WheelFrontRight-geom-1";
@@ -14,6 +14,6 @@ wheels: {
 }
 suspension: {
     stiffness: 70f;
-    compression: 0.5f;
+    compression: 0.1f;
     damping: 0.6f;
 }

@@ -51,6 +51,7 @@ public class Driver implements
 	Camera guiCam;
 	Node gui;
 	ViewWindow window;
+    Vector3f camLocation;
 	float baseAccelForce = 12000f;
 	float steerAngle = .5f;
 	int accelDirection = 0;
@@ -64,6 +65,7 @@ public class Driver implements
 		id = "p"+player.getPlayerNumber();
 		baseAccelForce = player.getCarData().getFloat("accelleration", 12000f);
 		steerAngle = player.getCarData().getFloat("steeringAngle", .5f);
+        camLocation = player.getCarData().getProperty(Vector3f.class, "camera_location");
 	}
 	
 	public VehicleControl createVehicle(GameFactory factory) {        
@@ -72,8 +74,7 @@ public class Driver implements
     }
 	public ViewPort createGameViewPort(RenderManager rm, Camera base) {
 		gameCam = base.clone();
-		//gameCam.setFov(90f);
-		ViewPort vp = rm.createMainView(id+"-view", gameCam);
+		ViewPort vp = rm.createMainView(getGameViewPortId(), gameCam);
 		vp.setClearFlags(true, true, true);
 		vp.setBackgroundColor(Main.SKY_COLOR);
 		return vp;
@@ -85,7 +86,7 @@ public class Driver implements
 		gui = new Node(id+"-gui");
 		gui.setQueueBucket(RenderQueue.Bucket.Gui);
 		gui.setCullHint(Spatial.CullHint.Never);
-		ViewPort vp = rm.createPostView(id+"-gui-view", guiCam);
+		ViewPort vp = rm.createPostView(getGuiViewPortId(), guiCam);
 		vp.setBackgroundColor(ColorRGBA.randomColor());
 //		vp.setClearColor(true);
 		vp.attachScene(gui);
@@ -147,15 +148,12 @@ public class Driver implements
 	
 	public void update(float tpf) {		
 		if (car == null || gameCam == null) return;
-		gameCam.setLocation(car.getPhysicsLocation().add(car.getPhysicsRotation().mult(new Vector3f(0f, 2f, 0f))));
+		gameCam.setLocation(car.getPhysicsLocation().add(car.getPhysicsRotation().mult(camLocation)));
+        //camControl.setOffset(car.getPhysicsRotation().mult(new Vector3f(0f, 2f, -.5f)));
 		Quaternion tilted = new Quaternion().lookAt(car.getPhysicsRotation().mult(new Vector3f(0f, 0f, -1f)), FastMath.interpolateLinear(.5f, Vector3f.UNIT_Y, car.getPhysicsRotation().mult(Vector3f.UNIT_Y)));
 		gameCam.setRotation(tilted);
-//        if (detectWheelSkid()) {
-//            if (!tireSkid.isPlaying()) mss.startEmittingSound("skid", this);
-//        }
-//        else if (tireSkid.isPlaying()) {
-//            mss.stopEmittingSound("skid", this);
-//        }
+        //gameCam.setLocation(car.getPhysicsLocation().add(3f, 3f, 3f));
+        //gameCam.lookAt(car.getPhysicsLocation(), Vector3f.UNIT_Y);
 	}
 	public void updateNodeStates(float tpf) {
 		gui.updateLogicalState(tpf);
@@ -194,6 +192,7 @@ public class Driver implements
 		car.setPhysicsRotation(rotation);
 		car.setLinearVelocity(Vector3f.ZERO);
 		car.setAngularVelocity(Vector3f.ZERO);
+        //camControl.resetCameraLocation();
 	}    
 	private void applyAcceleration() {
 		//car.accelerate(-(baseAccelForce+gearFactor*viewNum)*accelDirection);
@@ -233,6 +232,12 @@ public class Driver implements
 	public boolean isFinished() {
 		return finished;
 	}
+    public String getGameViewPortId() {
+        return id+"-view";
+    }
+    public String getGuiViewPortId() {
+        return id+"-gui-view";
+    }
 	@Override
 	public Collection<DriverListener> getListeners() {
 		return listeners;
