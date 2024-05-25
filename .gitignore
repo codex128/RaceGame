@@ -10,3 +10,6 @@
 *.xcf
 *.blend1
 *.j3odata
+/RaceGame/nbproject/private/
+/ArcherGame/nbproject/private/
+/jme3-core/nbproject/private/

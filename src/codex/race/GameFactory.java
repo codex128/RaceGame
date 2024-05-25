@@ -61,7 +61,9 @@ public class GameFactory extends GameAppState {
             return null;
         }
         Material mat = assetManager.loadMaterial(carData.getString("material"));
-        Texture tex = assetManager.loadTexture(new TextureKey(carData.getString("texture").replace((CharSequence)"$", color), false));
+        TextureKey key = new TextureKey(carData.getString("texture").replace((CharSequence)"$", color), false);
+        key.setFlipY(false);
+        Texture tex = assetManager.loadTexture(key);
         mat.setTexture("DiffuseMap", tex);
         return mat;
     }
@@ -103,7 +105,7 @@ public class GameFactory extends GameAppState {
         Vector3f wheelAxle = new Vector3f(-1, 0, 0);
 		J3map wheels = carData.getJ3map("wheels");
 		
-        car.setFrictionSlip(.5f);
+        car.setFrictionSlip(.9f);
         car.setRollingFriction(10000f);
         
         Geometry wheel_fr = getChildGeometry(model, wheels.getString("fr"));
@@ -133,9 +135,9 @@ public class GameFactory extends GameAppState {
         car.addWheel(wheel_bl.getParent(), box.getCenter().add(0, -back_wheel_h, 0),
                 wheelDirection, wheelAxle, 0.2f, wheelRadius, false);
         
-        for (int i = 0; i < car.getNumWheels(); i++) {
-            car.setRollInfluence(i, 0f);
-        }
+        ///for (int i = 0; i < car.getNumWheels(); i++) {
+        //    car.setRollInfluence(i, 0f);
+        //}
         
         J3map axles = carData.getJ3map("axles");
         if (axles != null) {

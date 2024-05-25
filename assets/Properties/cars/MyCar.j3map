@@ -13,7 +13,7 @@ wheels: {
     bl: "WheelBackLeft-geom-1";
 }
 suspension: {
-    stiffness: 70f;
+    stiffness: 270f;
     compression: 0.1f;
     damping: 0.6f;
 }
